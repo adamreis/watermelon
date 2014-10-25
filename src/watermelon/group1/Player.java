@@ -4,6 +4,7 @@ import java.util.*;
 
 import watermelon.sim.Pair;
 import watermelon.sim.seed;
+import watermelon.group1.Consts;
 
 public class Player extends watermelon.sim.Player {
 	public void init() {
@@ -41,5 +42,30 @@ public class Player extends watermelon.sim.Player {
 		}
 		
 		return seeds;
+	}
+	
+	private static ArrayList<SeedNode> generateSeedGraph(ArrayList<Location> seeds) {
+		ArrayList<SeedNode> nodes = new ArrayList<SeedNode>();
+		
+		for (Location loc: seeds) {
+			nodes.add(new SeedNode(loc));
+		}
+		
+		for (int i = 0; i < nodes.size(); i++) {
+			SeedNode nodeA = nodes.get(i);
+			for (int j = i + 1; j < nodes.size(); j++) {
+				SeedNode nodeB = nodes.get(j);
+				if (distance(nodeA, nodeB) <= 2*Consts.SEED_RADIUS) {
+					nodeA.adjacent.add(nodeB);
+					nodeB.adjacent.add(nodeA);
+				}
+			}
+		}
+		
+		return nodes;
+	}
+	
+	private static double distance(Location locA, Location locB) {
+			return Math.sqrt(Math.pow((locA.x - locB.x), 2) + Math.pow((locA.y - locB.y), 2));
 	}
 }
