@@ -18,4 +18,20 @@ public class SeedNode extends Location {
 		adjacent = new ArrayList<SeedNode>();
 		ploidy = Ploidies.NONE;
 	}
+	
+	public Ploidies getMostCommonNeighbor() {
+		int diploidNeighbors = 0;
+		int tetraploidNeighbors = 0;
+		for (SeedNode neighbor : adjacent) {
+			if (neighbor.ploidy.equals(Ploidies.DIPLOID))
+				diploidNeighbors++;
+			else if (neighbor.ploidy.equals(Ploidies.TETRAPLOID))
+				tetraploidNeighbors++;
+		}
+		if (tetraploidNeighbors > diploidNeighbors)
+			return Ploidies.TETRAPLOID;
+		else if (diploidNeighbors > tetraploidNeighbors)
+			return Ploidies.DIPLOID;
+		return Ploidies.NONE;
+	}
 }
