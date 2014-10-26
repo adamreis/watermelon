@@ -19,13 +19,13 @@ public class Player extends watermelon.sim.Player {
 			trees.add(new Location(p.x, p.y));
 		
 		// Get a packing using some algorithm
-		ArrayList<Location> locations = PackAlgos.rectilinear(trees, width, height);
+		ArrayList<Location> locations = PackAlgos.hexagonal(trees, width, height);
 
 		// Set the ploidies (every other for now)
 		ArrayList<SeedNode> seedNodes = generateSeedGraph(locations);
 		
 		// Change the ploidies based on some algorithm
-		ColoringAlgos.colorGreedy(seedNodes);
+		ColoringAlgos.colorAround(seedNodes);
 		
 		// Transform our output into the simulator classes
 		ArrayList<seed> seeds = new ArrayList<seed>();
