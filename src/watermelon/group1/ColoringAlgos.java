@@ -26,7 +26,6 @@ public class ColoringAlgos {
 		
 		for (SeedNode node: list) {
 			if (node.distanceTo(centerX, centerY) < closestDistanceToCenter) {
-				System.out.println("found closer");
 				closestDistanceToCenter = node.distanceTo(centerX, centerY);
 				closestToCenter = node;
 			}
