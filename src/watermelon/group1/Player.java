@@ -25,7 +25,7 @@ public class Player extends watermelon.sim.Player {
 		ArrayList<SeedNode> seedNodes = generateSeedGraph(locations);
 		
 		// Change the ploidies based on some algorithm
-		ColoringAlgos.colorConcentric(seedNodes, width/2, height/2);
+		ColoringAlgos.colorConcentric(seedNodes, new Location(width/2, height/2));
 //		ColoringAlgos.colorGreedy(seedNodes);
 		
 		// Transform our output into the simulator classes

@@ -20,13 +20,13 @@ public class ColoringAlgos {
 	/*
 	 * Creates concentric hexagons (theoretically)
 	 */
-	public static void colorConcentric(ArrayList<SeedNode> list, double centerX, double centerY) {
+	public static void colorConcentric(ArrayList<SeedNode> list, Location boardCenter) {
 		SeedNode closestToCenter = list.get(list.size()/2);
-		double closestDistanceToCenter = closestToCenter.distanceTo(centerX, centerY);
+		double closestDistanceToCenter = closestToCenter.distanceTo(boardCenter);
 		
 		for (SeedNode node: list) {
-			if (node.distanceTo(centerX, centerY) < closestDistanceToCenter) {
-				closestDistanceToCenter = node.distanceTo(centerX, centerY);
+			if (node.distanceTo(boardCenter) < closestDistanceToCenter) {
+				closestDistanceToCenter = node.distanceTo(boardCenter);
 				closestToCenter = node;
 			}
 		}
