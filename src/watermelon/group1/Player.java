@@ -4,6 +4,7 @@ import java.util.*;
 
 import watermelon.sim.Pair;
 import watermelon.sim.seed;
+import watermelon.group1.Consts;
 
 public class Player extends watermelon.sim.Player {
 	public void init() {
@@ -20,14 +21,9 @@ public class Player extends watermelon.sim.Player {
 		// Get a packing using some algorithm
 		ArrayList<Location> locations = PackAlgos.hexagonal(trees, width, height);
 
-		// Set the ploidies
-		ArrayList<SeedNode> seedNodes = new ArrayList<SeedNode>();
-		
-		for (Location location : locations) {
-			SeedNode seedNode = new SeedNode(location);
-			seedNode.ploidy = SeedNode.Ploidies.TETRAPLOID;
-			seedNodes.add(seedNode);
-		}
+		// Set the ploidies (every other for now)
+		ArrayList<SeedNode> seedNodes = generateSeedGraph(locations);
+		System.out.println(seedNodes.get(55).adjacent);
 		
 		// Change the ploidies based on some algorithm
 		ColoringAlgos.colorGreedy(seedNodes);
@@ -44,5 +40,30 @@ public class Player extends watermelon.sim.Player {
 		}
 		
 		return seeds;
+	}
+	
+	private static ArrayList<SeedNode> generateSeedGraph(ArrayList<Location> seeds) {
+		ArrayList<SeedNode> nodes = new ArrayList<SeedNode>();
+		
+		for (Location loc: seeds) {
+			nodes.add(new SeedNode(loc));
+		}
+		
+		for (int i = 0; i < nodes.size(); i++) {
+			SeedNode nodeA = nodes.get(i);
+			for (int j = i + 1; j < nodes.size(); j++) {
+				SeedNode nodeB = nodes.get(j);
+				if (distance(nodeA, nodeB) <= 2*Consts.SEED_RADIUS + .000001) { // Need a little fudge factor here
+					nodeA.adjacent.add(nodeB);
+					nodeB.adjacent.add(nodeA);
+				}
+			}
+		}
+		
+		return nodes;
+	}
+	
+	private static double distance(Location locA, Location locB) {
+			return Math.sqrt(Math.pow((locA.x - locB.x), 2) + Math.pow((locA.y - locB.y), 2));
 	}
 }
