@@ -21,9 +21,8 @@ public class Player extends watermelon.sim.Player {
 		// Get a packing using some algorithm
 		ArrayList<Location> locations = PackAlgos.hexagonal(trees, width, height);
 
-		// Set the ploidies (every other for now)
+		// Create graph from locations
 		ArrayList<SeedNode> seedNodes = generateSeedGraph(locations);
-		System.out.println(seedNodes.get(55).adjacent);
 		
 		// Transform our output into the simulator classes
 		ArrayList<seed> seeds = new ArrayList<seed>();
