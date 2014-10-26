@@ -12,10 +12,10 @@ public class SeedNode extends Location {
 	public ArrayList<SeedNode> adjacent;
 	public Ploidies ploidy;
 	
-	public SeedNode(Location l) {
-		super(l.x, l.y);
+	public SeedNode(Location loc) {
+		super(loc.x, loc.y);
 		
-		adjacent = new ArrayList<SeedNode>();
-		ploidy = Ploidies.NONE;
+		this.adjacent = new ArrayList<SeedNode>();
+		this.ploidy = Ploidies.NONE;
 	}
 }
