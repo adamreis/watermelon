@@ -128,7 +128,7 @@ public class PackAlgos {
 			for (Location tree : trees) {
 				if ((d = Location.distance(location, tree)) < Consts.SEED_RADIUS + Consts.TREE_RADIUS) {
 					Vector2D v = new Vector2D();
-					double m = Math.max(Consts.SEED_RADIUS + Consts.TREE_RADIUS - d, Math.min(Consts.SEED_RADIUS + Consts.TREE_RADIUS - d, MIN_JIGGLE_MOVE));
+					double m = Math.max((Consts.SEED_RADIUS + Consts.TREE_RADIUS - d) / 2, Math.min(Consts.SEED_RADIUS + Consts.TREE_RADIUS - d, MIN_JIGGLE_MOVE));
 					
 					v.x = Math.sqrt(Math.abs(location.x - tree.x)) * m * Math.signum(location.x - tree.x);
 					v.y = Math.sqrt(Math.abs(location.y - tree.y)) * m * Math.signum(location.y - tree.y);
@@ -143,7 +143,7 @@ public class PackAlgos {
 				
 				if (i != j && (d = Location.distance(location, testLocation)) < 2*Consts.SEED_RADIUS) {
 					Vector2D v = new Vector2D();
-					double m = Math.max(2*Consts.SEED_RADIUS - d, Math.min(2*Consts.SEED_RADIUS - d, MIN_JIGGLE_MOVE));
+					double m = Math.max((2*Consts.SEED_RADIUS - d) / 2, Math.min((2*Consts.SEED_RADIUS - d), MIN_JIGGLE_MOVE));
 					
 					v.x = Math.sqrt(Math.abs(location.x - testLocation.x)) * m * Math.signum(location.x - testLocation.x);
 					v.y = Math.sqrt(Math.abs(location.y - testLocation.y)) * m * Math.signum(location.y - testLocation.y);
