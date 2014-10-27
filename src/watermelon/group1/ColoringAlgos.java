@@ -18,7 +18,7 @@ public class ColoringAlgos {
 	}
 	
 	/*
-	 * Creates concentric hexagons (theoretically)
+	 * Creates concentric hexagons
 	 */
 	public static void colorConcentric(ArrayList<SeedNode> list, Location startPoint) {
 		SeedNode closestToCenter = findClosestSeedToLocation(list, startPoint);
