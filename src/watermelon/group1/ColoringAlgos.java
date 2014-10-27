@@ -2,6 +2,7 @@ package watermelon.group1;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Random;
 
 public class ColoringAlgos {
 	
@@ -58,6 +59,19 @@ public class ColoringAlgos {
 			return SeedNode.Ploidies.TETRAPLOID;
 		} else {
 			return SeedNode.Ploidies.DIPLOID;
+		}
+	}
+
+	/*
+	 * Colors each seed randomly
+	 */
+	public static void colorRandom(ArrayList<SeedNode> list) {
+		Random rand = new Random();
+		for (SeedNode node : list) {
+			if (rand.nextBoolean())
+				node.ploidy = SeedNode.Ploidies.TETRAPLOID;
+			else
+				node.ploidy = SeedNode.Ploidies.DIPLOID;
 		}
 	}
 }
