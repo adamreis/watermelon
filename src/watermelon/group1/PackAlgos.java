@@ -163,7 +163,6 @@ public class PackAlgos {
 			locations = tryLocations;			
 		}
 		
-		locations.add(tryLocation);
 		return locations;
 	}
 }
