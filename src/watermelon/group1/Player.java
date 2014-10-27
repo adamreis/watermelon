@@ -19,9 +19,9 @@ public class Player extends watermelon.sim.Player {
 			trees.add(new Location(p.x, p.y));
 		
 		// Get a packing using some algorithm
-		ArrayList<Location> locations = PackAlgos.rectilinear(trees, width, height);
-
-		// Generate Graph
+		ArrayList<Location> locations = PackAlgos.physical(trees, width, height);
+		
+		// Build the graph
 		ArrayList<SeedNode> seedNodes = generateSeedGraph(locations);
 		
 		// Change the ploidies based on some algorithm
