@@ -21,15 +21,7 @@ public class ColoringAlgos {
 	 * Creates concentric hexagons (theoretically)
 	 */
 	public static void colorConcentric(ArrayList<SeedNode> list, Location startPoint) {
-		SeedNode closestToCenter = list.get(list.size()/2);
-		double closestDistanceToCenter = closestToCenter.distanceTo(startPoint);
-		
-		for (SeedNode node: list) {
-			if (node.distanceTo(startPoint) < closestDistanceToCenter) {
-				closestDistanceToCenter = node.distanceTo(startPoint);
-				closestToCenter = node;
-			}
-		}
+		SeedNode closestToCenter = findClosestSeedToLocation(list, startPoint);
 		
 		closestToCenter.ploidy = SeedNode.Ploidies.DIPLOID;
 		LinkedList<SeedNode> queue = new LinkedList<SeedNode>();
@@ -45,6 +37,20 @@ public class ColoringAlgos {
 				}
 			}
 		}
+	}
+	
+	private static SeedNode findClosestSeedToLocation(ArrayList<SeedNode> list, Location loc) {
+		SeedNode closestToCenter = list.get(list.size()/2);
+		double closestDistanceToCenter = closestToCenter.distanceTo(loc);
+		
+		for (SeedNode node: list) {
+			if (node.distanceTo(loc) < closestDistanceToCenter) {
+				closestDistanceToCenter = node.distanceTo(loc);
+				closestToCenter = node;
+			}
+		}
+		
+		return closestToCenter;
 	}
 	
 	private static SeedNode.Ploidies oppositePloidy(SeedNode.Ploidies ploidy) {
