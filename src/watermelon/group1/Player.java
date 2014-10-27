@@ -21,11 +21,12 @@ public class Player extends watermelon.sim.Player {
 		// Get a packing using some algorithm
 		ArrayList<Location> locations = PackAlgos.rectilinear(trees, width, height);
 
-		// Set the ploidies (every other for now)
+		// Generate Graph
 		ArrayList<SeedNode> seedNodes = generateSeedGraph(locations);
 		
 		// Change the ploidies based on some algorithm
-		ColoringAlgos.colorGreedy(seedNodes);
+		ColoringAlgos.colorConcentric(seedNodes, new Location(width/2, height/2));
+//		ColoringAlgos.colorGreedy(seedNodes);
 		
 		// Transform our output into the simulator classes
 		ArrayList<seed> seeds = new ArrayList<seed>();
@@ -52,7 +53,7 @@ public class Player extends watermelon.sim.Player {
 			SeedNode nodeA = nodes.get(i);
 			for (int j = i + 1; j < nodes.size(); j++) {
 				SeedNode nodeB = nodes.get(j);
-				if (distance(nodeA, nodeB) <= 2*Consts.SEED_RADIUS + .000001) { // Need a little fudge factor here
+				if (nodeA.distanceTo(nodeB) <= 2*Consts.SEED_RADIUS + .000001) { // Need a little fudge factor here
 					nodeA.adjacent.add(nodeB);
 					nodeB.adjacent.add(nodeA);
 				}
@@ -60,9 +61,5 @@ public class Player extends watermelon.sim.Player {
 		}
 		
 		return nodes;
-	}
-	
-	private static double distance(Location locA, Location locB) {
-			return Math.sqrt(Math.pow((locA.x - locB.x), 2) + Math.pow((locA.y - locB.y), 2));
 	}
 }

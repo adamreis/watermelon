@@ -34,4 +34,8 @@ public class SeedNode extends Location {
 			return Ploidies.DIPLOID;
 		return Ploidies.NONE;
 	}
+	
+	public double distanceTo(Location loc) {
+		return Math.sqrt(Math.pow((this.x - loc.x), 2) + Math.pow((this.y - loc.y), 2));
+	}
 }
