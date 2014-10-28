@@ -6,6 +6,9 @@ import watermelon.group1.Location;
 import watermelon.group1.Vector2D;
 
 public class PackAlgos {
+	public static enum Corner { UL, BL, UR, BR };
+	public static enum Direction { H, V };
+	
 	public static final int MAX_JIGGLES = 50000;
 	public static final double MIN_JIGGLE_MOVE = 0.001;
 	
@@ -18,46 +21,102 @@ public class PackAlgos {
 		return false;
 	}
 	
-	public static ArrayList<Location> rectilinear(ArrayList<Location> trees, double width, double height) {
-		double x = Consts.SEED_RADIUS;
-		double y = Consts.SEED_RADIUS;
+	public static ArrayList<Location> rectilinear(ArrayList<Location> trees, double width, double height, Corner corner) {
+		double x, y, xStart, yStart;
+		int xSign, ySign;
+		
+		if (corner == Corner.UL || corner == Corner.BL) {
+			xStart = Consts.SEED_RADIUS;
+			xSign = 1;
+		} else {
+			xStart = width - Consts.SEED_RADIUS;
+			xSign = -1;
+		}
+		
+		if (corner == Corner.UL || corner == Corner.UR) {
+			yStart = Consts.SEED_RADIUS;
+			ySign = 1;
+		} else {
+			yStart = height - Consts.SEED_RADIUS;
+			ySign = -1;
+		}
+				
 		ArrayList<Location> locations = new ArrayList<Location>();
 		
-		while (y <= height - Consts.SEED_RADIUS) {
-			x = Consts.SEED_RADIUS;
+		x = xStart;
+		y = yStart;
+		
+		while (y >= Consts.SEED_RADIUS && y <= height - Consts.SEED_RADIUS) {
+			x = xStart;
 			
-			while (x <= width - Consts.SEED_RADIUS) {
+			while (x >= Consts.SEED_RADIUS && x <= width - Consts.SEED_RADIUS) {
 				if (!closeToTree(x, y, trees))
 					locations.add(new Location(x, y));
 				
-				x += 2*Consts.SEED_RADIUS;
+				x += 2*Consts.SEED_RADIUS * xSign;
 			}
 			
-			y += 2*Consts.SEED_RADIUS;
+			y += 2*Consts.SEED_RADIUS * ySign;
 		}
 		
 		return locations;
 	}
 	
-	public static ArrayList<Location> hexagonal(ArrayList<Location> trees, double width, double height) {
-		double x = Consts.SEED_RADIUS;
-		double y = Consts.SEED_RADIUS;
-		boolean offset = false;
+	public static ArrayList<Location> hexagonal(ArrayList<Location> trees, double width, double height, Corner corner, Direction direction) {
+		double x, y, xStart, yStart;
+		int xSign, ySign;
+		boolean offset;
 		
+		if (corner == Corner.UL || corner == Corner.BL) {
+			xStart = Consts.SEED_RADIUS;
+			xSign = 1;
+		} else {
+			xStart = width - Consts.SEED_RADIUS;
+			xSign = -1;
+		}
+		
+		if (corner == Corner.UL || corner == Corner.UR) {
+			yStart = Consts.SEED_RADIUS;
+			ySign = 1;
+		} else {
+			yStart = height - Consts.SEED_RADIUS;
+			ySign = -1;
+		}
+				
 		ArrayList<Location> locations = new ArrayList<Location>();
 		
-		while (y <= height - Consts.SEED_RADIUS) {
-			x = Consts.SEED_RADIUS + (offset ? Consts.SEED_RADIUS : 0);
-			
-			while (x <= width - Consts.SEED_RADIUS) {
-				if (!closeToTree(x, y, trees))
-					locations.add(new Location(x, y));
+		x = xStart;
+		y = yStart;
+		offset = false;
+		
+		if (direction == Direction.H) {
+			while (y >= Consts.SEED_RADIUS && y <= height - Consts.SEED_RADIUS) {
+				x = xStart + (offset ? Consts.SEED_RADIUS * xSign : 0);
 				
-				x += 2*Consts.SEED_RADIUS;
+				while (x >= Consts.SEED_RADIUS && x <= width - Consts.SEED_RADIUS) {
+					if (!closeToTree(x, y, trees))
+						locations.add(new Location(x, y));
+					
+					x += 2*Consts.SEED_RADIUS * xSign;
+				}
+				
+				y += Consts.SQRT_3*Consts.SEED_RADIUS * ySign;
+				offset = !offset;
 			}
-			
-			y += Consts.SQRT_3*Consts.SEED_RADIUS;
-			offset = !offset;
+		} else {
+			while (x >= Consts.SEED_RADIUS && x <= width - Consts.SEED_RADIUS) {
+				y = yStart + (offset ? Consts.SEED_RADIUS * ySign : 0);
+				
+				while (y >= Consts.SEED_RADIUS && y <= height - Consts.SEED_RADIUS) {
+					if (!closeToTree(x, y, trees))
+						locations.add(new Location(x, y));
+					
+					y += 2*Consts.SEED_RADIUS * ySign;
+				}
+				
+				x += Consts.SQRT_3*Consts.SEED_RADIUS * xSign;
+				offset = !offset;
+			}
 		}
 		
 		return locations;
@@ -128,7 +187,7 @@ public class PackAlgos {
 			for (Location tree : trees) {
 				if ((d = Location.distance(location, tree)) < Consts.SEED_RADIUS + Consts.TREE_RADIUS) {
 					Vector2D v = new Vector2D();
-					double m = Math.max(Consts.SEED_RADIUS + Consts.TREE_RADIUS - d, Math.min(Consts.SEED_RADIUS + Consts.TREE_RADIUS - d, MIN_JIGGLE_MOVE));
+					double m = Math.max((Consts.SEED_RADIUS + Consts.TREE_RADIUS - d) / 2, Math.min(Consts.SEED_RADIUS + Consts.TREE_RADIUS - d, MIN_JIGGLE_MOVE));
 					
 					v.x = Math.sqrt(Math.abs(location.x - tree.x)) * m * Math.signum(location.x - tree.x);
 					v.y = Math.sqrt(Math.abs(location.y - tree.y)) * m * Math.signum(location.y - tree.y);
@@ -143,7 +202,7 @@ public class PackAlgos {
 				
 				if (i != j && (d = Location.distance(location, testLocation)) < 2*Consts.SEED_RADIUS) {
 					Vector2D v = new Vector2D();
-					double m = Math.max(2*Consts.SEED_RADIUS - d, Math.min(2*Consts.SEED_RADIUS - d, MIN_JIGGLE_MOVE));
+					double m = Math.max((2*Consts.SEED_RADIUS - d) / 2, Math.min((2*Consts.SEED_RADIUS - d), MIN_JIGGLE_MOVE));
 					
 					v.x = Math.sqrt(Math.abs(location.x - testLocation.x)) * m * Math.signum(location.x - testLocation.x);
 					v.y = Math.sqrt(Math.abs(location.y - testLocation.y)) * m * Math.signum(location.y - testLocation.y);
