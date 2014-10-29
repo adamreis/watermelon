@@ -57,10 +57,16 @@ public class ColoringAlgos {
 	 * Colors each seed such that it attains the maximum value based on the ploidies
 	 * and distances of other colored seeds.
 	 */
-	public static void colorMaxValue(ArrayList<SeedNode> list) {
-		for (SeedNode nodeToColor : list) {
+	public static void colorMaxValue(ArrayList<SeedNode> list, Location startPoint) {
+		SeedNode closestToStart = findClosestSeedToLocation(list, startPoint);
+		LinkedList<SeedNode> queue = new LinkedList<SeedNode>();
+		queue.add(closestToStart);
+		
+		while (queue.size() > 0) {
 			double diploidInfluence = 0;
 			double tetraploidInfluence = 0;
+			SeedNode nodeToColor = queue.remove();
+			
 			for (SeedNode comparisonNode : list) {
 				if (comparisonNode.ploidy == SeedNode.Ploidies.DIPLOID) {
 					diploidInfluence += influenceFromSeed(nodeToColor, comparisonNode);
@@ -69,10 +75,16 @@ public class ColoringAlgos {
 					tetraploidInfluence += influenceFromSeed(nodeToColor, comparisonNode);
 				}
 			}
+			
 			if (diploidInfluence > tetraploidInfluence)
 				nodeToColor.ploidy = SeedNode.Ploidies.TETRAPLOID;
 			else
 				nodeToColor.ploidy = SeedNode.Ploidies.DIPLOID;
+			
+			for (SeedNode neighbor : nodeToColor.adjacent) {
+				if (neighbor.ploidy == SeedNode.Ploidies.NONE && !queue.contains(neighbor))
+					queue.addFirst(neighbor);
+			}
 		}
 	}
 	
