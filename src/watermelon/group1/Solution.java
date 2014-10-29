@@ -26,10 +26,11 @@ public class Solution {
 	
 	public Solution deepDuplicate() {
 		Solution newSolution = new Solution();
-		
+		ArrayList<Location> locations = new ArrayList<Location>();
 		for (SeedNode seed: this.seedNodes) {
-			newSolution.seedNodes.add(new SeedNode(seed));
+			locations.add(new Location(seed));
 		}
+		newSolution.seedNodes = generateSeedGraph(locations);
 		
 		newSolution.packingAlgo = this.packingAlgo;
 		newSolution.coloringAlgo = this.coloringAlgo;
