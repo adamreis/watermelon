@@ -65,8 +65,13 @@ public class Player extends watermelon.sim.Player {
 			actualSolutions.add(newSolution);
 			
 			newSolution = packing.deepDuplicate();
-			ColoringAlgos.colorMaxValue(newSolution.seedNodes);
-			newSolution.coloringAlgo = "max value";
+			ColoringAlgos.colorMaxValue(newSolution.seedNodes, new Location(width/2, height/2));
+			newSolution.coloringAlgo = "max value, center";
+			actualSolutions.add(newSolution);
+			
+			newSolution = packing.deepDuplicate();
+			ColoringAlgos.colorMaxValue(newSolution.seedNodes, new Location(0,0));
+			newSolution.coloringAlgo = "max value, UL corner";
 			actualSolutions.add(newSolution);
 		}
 		System.err.println("Generated all colorings");
