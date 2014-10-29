@@ -19,8 +19,25 @@ public class Player extends watermelon.sim.Player {
 		for (Pair p : treelist)
 			trees.add(new Location(p.x, p.y));
 		
-		// Get all possible packings/colorings
-		ArrayList<Solution> possibleSolutions = generateAllPossibleSolutions(trees, width, height, s);
+		boolean testMethod = false;
+		ArrayList<Solution> possibleSolutions;
+		
+		// use this variable for testing a particular method
+		if (testMethod) {
+			possibleSolutions = new ArrayList<Solution>();
+			// choose a packing method
+			Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V));
+			ColoringAlgos.colorMaxValue(solution.seedNodes, new Location(0,0));
+			solution.coloringAlgo = "test";
+			solution.packingAlgo = "test";
+			solution.score(s);
+			possibleSolutions.add(solution);
+		}
+		
+		else {
+			// Get all possible packings/colorings
+			possibleSolutions = generateAllPossibleSolutions(trees, width, height, s);
+		}
 		
 		// Now find the best one
 		Solution bestSolution = new Solution();
@@ -65,11 +82,6 @@ public class Player extends watermelon.sim.Player {
 			actualSolutions.add(newSolution);
 			
 			newSolution = packing.deepDuplicate();
-			ColoringAlgos.colorAdjacent(newSolution.seedNodes);
-			newSolution.coloringAlgo = "adjacent";
-			actualSolutions.add(newSolution);
-			
-			newSolution = packing.deepDuplicate();
 			ColoringAlgos.colorMaxValue(newSolution.seedNodes, new Location(width/2, height/2));
 			newSolution.coloringAlgo = "max value, center";
 			actualSolutions.add(newSolution);
@@ -83,6 +95,7 @@ public class Player extends watermelon.sim.Player {
 		
 		for (Solution solution : actualSolutions) {
 			solution.score(s);
+
 		}
 		System.err.println("Scored all colorings");
 		return actualSolutions;

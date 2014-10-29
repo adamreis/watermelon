@@ -6,6 +6,8 @@ import java.util.Random;
 
 public class ColoringAlgos {
 	
+	private static final int MAX_RECOLORS = 50;
+	
 	/*
 	 * Colors each seed such that it is least like the surrounding seeds.
 	 */
@@ -86,6 +88,40 @@ public class ColoringAlgos {
 					queue.addFirst(neighbor);
 			}
 		}
+		boolean localMax = true;
+		int i = 0;
+		while (localMax && i < MAX_RECOLORS) {
+			localMax = reColorIfNecessary(list);
+			i++;
+		}
+	}
+	
+	private static boolean reColorIfNecessary(ArrayList<SeedNode> list) {
+		boolean reColored = false;
+		for (SeedNode nodeToColor : list) {
+			double diploidInfluence = 0;
+			double tetraploidInfluence = 0;
+			for (SeedNode comparisonNode : list) {
+				if (comparisonNode == nodeToColor)
+					continue;
+				if (comparisonNode.ploidy == SeedNode.Ploidies.DIPLOID) {
+					diploidInfluence += influenceFromSeed(nodeToColor, comparisonNode);
+				}
+				else if (comparisonNode.ploidy == SeedNode.Ploidies.TETRAPLOID) {
+					tetraploidInfluence += influenceFromSeed(nodeToColor, comparisonNode);
+				}
+			}
+			
+			if (diploidInfluence > tetraploidInfluence && nodeToColor.ploidy != SeedNode.Ploidies.TETRAPLOID) {
+				nodeToColor.ploidy = SeedNode.Ploidies.TETRAPLOID;
+				reColored = true;
+			}
+			else if (tetraploidInfluence > diploidInfluence && nodeToColor.ploidy != SeedNode.Ploidies.DIPLOID) {
+				nodeToColor.ploidy = SeedNode.Ploidies.DIPLOID;
+				reColored = true;
+			}
+		}
+		return reColored;
 	}
 	
 	private static double influenceFromSeed(Location influencee, Location influencer) {
