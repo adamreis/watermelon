@@ -3,6 +3,7 @@ package watermelon.group1;
 import java.util.ArrayList;
 
 import watermelon.group1.Location;
+import watermelon.sim.seed;
 
 public class SeedNode extends Location {
 	public enum Ploidies {

@@ -6,6 +6,8 @@ import java.util.Random;
 
 public class ColoringAlgos {
 	
+	private static final int MAX_RECOLORS = 50;
+	
 	/*
 	 * Colors each seed such that it is least like the surrounding seeds.
 	 */
@@ -57,10 +59,16 @@ public class ColoringAlgos {
 	 * Colors each seed such that it attains the maximum value based on the ploidies
 	 * and distances of other colored seeds.
 	 */
-	public static void colorMaxValue(ArrayList<SeedNode> list) {
-		for (SeedNode nodeToColor : list) {
+	public static void colorMaxValue(ArrayList<SeedNode> list, Location startPoint) {
+		SeedNode closestToStart = findClosestSeedToLocation(list, startPoint);
+		LinkedList<SeedNode> queue = new LinkedList<SeedNode>();
+		queue.add(closestToStart);
+		
+		while (queue.size() > 0) {
 			double diploidInfluence = 0;
 			double tetraploidInfluence = 0;
+			SeedNode nodeToColor = queue.remove();
+			
 			for (SeedNode comparisonNode : list) {
 				if (comparisonNode.ploidy == SeedNode.Ploidies.DIPLOID) {
 					diploidInfluence += influenceFromSeed(nodeToColor, comparisonNode);
@@ -69,11 +77,51 @@ public class ColoringAlgos {
 					tetraploidInfluence += influenceFromSeed(nodeToColor, comparisonNode);
 				}
 			}
+			
 			if (diploidInfluence > tetraploidInfluence)
 				nodeToColor.ploidy = SeedNode.Ploidies.TETRAPLOID;
 			else
 				nodeToColor.ploidy = SeedNode.Ploidies.DIPLOID;
+			
+			for (SeedNode neighbor : nodeToColor.adjacent) {
+				if (neighbor.ploidy == SeedNode.Ploidies.NONE && !queue.contains(neighbor))
+					queue.addFirst(neighbor);
+			}
 		}
+		boolean localMax = true;
+		int i = 0;
+		while (localMax && i < MAX_RECOLORS) {
+			localMax = reColorIfNecessary(list);
+			i++;
+		}
+	}
+	
+	private static boolean reColorIfNecessary(ArrayList<SeedNode> list) {
+		boolean reColored = false;
+		for (SeedNode nodeToColor : list) {
+			double diploidInfluence = 0;
+			double tetraploidInfluence = 0;
+			for (SeedNode comparisonNode : list) {
+				if (comparisonNode == nodeToColor)
+					continue;
+				if (comparisonNode.ploidy == SeedNode.Ploidies.DIPLOID) {
+					diploidInfluence += influenceFromSeed(nodeToColor, comparisonNode);
+				}
+				else if (comparisonNode.ploidy == SeedNode.Ploidies.TETRAPLOID) {
+					tetraploidInfluence += influenceFromSeed(nodeToColor, comparisonNode);
+				}
+			}
+			
+			if (diploidInfluence > tetraploidInfluence && nodeToColor.ploidy != SeedNode.Ploidies.TETRAPLOID) {
+				nodeToColor.ploidy = SeedNode.Ploidies.TETRAPLOID;
+				reColored = true;
+			}
+			else if (tetraploidInfluence > diploidInfluence && nodeToColor.ploidy != SeedNode.Ploidies.DIPLOID) {
+				nodeToColor.ploidy = SeedNode.Ploidies.DIPLOID;
+				reColored = true;
+			}
+		}
+		return reColored;
 	}
 	
 	private static double influenceFromSeed(Location influencee, Location influencer) {

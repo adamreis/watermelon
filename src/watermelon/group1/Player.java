@@ -5,6 +5,7 @@ import java.util.*;
 import watermelon.sim.Pair;
 import watermelon.sim.seed;
 import watermelon.group1.Consts;
+import watermelon.group1.Solution;
 
 public class Player extends watermelon.sim.Player {
 	public void init() {
@@ -18,50 +19,157 @@ public class Player extends watermelon.sim.Player {
 		for (Pair p : treelist)
 			trees.add(new Location(p.x, p.y));
 		
-		// Get a packing using some algorithm
-		//ArrayList<Location> locations = PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UL);
-		ArrayList<Location> locations = PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V);
-		//ArrayList<Location> locations = PackAlgos.physical(trees, width, height);
+		boolean testMethod = false;
+		ArrayList<Solution> possibleSolutions;
 		
-		// Build the graph
-		ArrayList<SeedNode> seedNodes = generateSeedGraph(locations);
+		// use this variable for testing a particular method
+		if (testMethod) {
+			possibleSolutions = new ArrayList<Solution>();
+			// choose a packing method
+			Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V));
+			ColoringAlgos.colorMaxValue(solution.seedNodes, new Location(0,0));
+			solution.coloringAlgo = "test";
+			solution.packingAlgo = "test";
+			solution.score(s);
+			possibleSolutions.add(solution);
+		}
 		
-		// Change the ploidies based on some algorithm
-//		ColoringAlgos.colorConcentric(seedNodes, new Location(width/2, height/2));
-		ColoringAlgos.colorMaxValue(seedNodes);
+		else {
+			// Get all possible packings/colorings
+			possibleSolutions = generateAllPossibleSolutions(trees, width, height, s);
+		}
 		
-		// Transform our output into the simulator classes
-		ArrayList<seed> seeds = new ArrayList<seed>();
-		
-		for (SeedNode seedNode : seedNodes) {
-			if (seedNode.ploidy != SeedNode.Ploidies.NONE) {
-				double x = seedNode.x;
-				double y = seedNode.y;
-				seeds.add(new seed(x, y, seedNode.ploidy == SeedNode.Ploidies.TETRAPLOID));
+		// Now find the best one
+		Solution bestSolution = new Solution();
+		for (Solution solution : possibleSolutions) {
+			if (solution.score > bestSolution.score) {
+				bestSolution = solution;
 			}
 		}
 		
-		return seeds;
+		// Print which configuration was best
+		System.out.println("Winning config:");
+		System.out.println("\tPacking: " + bestSolution.packingAlgo);
+		System.out.println("\tColoring: " + bestSolution.coloringAlgo);
+		
+		// Transform our output into the simulator classes and return it
+		return bestSolution.simRepresentation();
 	}
 	
-	private static ArrayList<SeedNode> generateSeedGraph(ArrayList<Location> seeds) {
-		ArrayList<SeedNode> nodes = new ArrayList<SeedNode>();
+	
+	
+	private static ArrayList<Solution> generateAllPossibleSolutions(ArrayList<Location> trees, double width, double height, double s) {
+		System.err.println("generateAllPossibleSolutions called");
+		ArrayList<Solution> packings = generateAllPackings(trees, width, height);
+		System.err.println("Generated all packings");
+		ArrayList<Solution> actualSolutions = new ArrayList<Solution>();
 		
-		for (Location loc: seeds) {
-			nodes.add(new SeedNode(loc));
+		Solution newSolution;
+		for (Solution packing : packings) {
+			newSolution = packing.deepDuplicate();
+			ColoringAlgos.colorAdjacent(newSolution.seedNodes);
+			newSolution.coloringAlgo = "adjacent";
+			actualSolutions.add(newSolution);
+			
+			newSolution = packing.deepDuplicate();
+			ColoringAlgos.colorConcentric(newSolution.seedNodes, new Location(width/2, height/2));
+			newSolution.coloringAlgo = "concentric, center";
+			actualSolutions.add(newSolution);
+			
+			newSolution = packing.deepDuplicate();
+			ColoringAlgos.colorConcentric(newSolution.seedNodes, new Location(0, 0));
+			newSolution.coloringAlgo = "concentric, UL corner";
+			actualSolutions.add(newSolution);
+			
+			newSolution = packing.deepDuplicate();
+			ColoringAlgos.colorMaxValue(newSolution.seedNodes, new Location(width/2, height/2));
+			newSolution.coloringAlgo = "max value, center";
+			actualSolutions.add(newSolution);
+			
+			newSolution = packing.deepDuplicate();
+			ColoringAlgos.colorMaxValue(newSolution.seedNodes, new Location(0,0));
+			newSolution.coloringAlgo = "max value, UL corner";
+			actualSolutions.add(newSolution);
 		}
+		System.err.println("Generated all colorings");
 		
-		for (int i = 0; i < nodes.size(); i++) {
-			SeedNode nodeA = nodes.get(i);
-			for (int j = i + 1; j < nodes.size(); j++) {
-				SeedNode nodeB = nodes.get(j);
-				if (nodeA.distanceTo(nodeB) <= 2*Consts.SEED_RADIUS + Consts.ADJACENCY_FUDGE_FACTOR) { // Need a little fudge factor here
-					nodeA.adjacent.add(nodeB);
-					nodeB.adjacent.add(nodeA);
-				}
-			}
+		for (Solution solution : actualSolutions) {
+			solution.score(s);
+
 		}
-		
-		return nodes;
+		System.err.println("Scored all colorings");
+		return actualSolutions;
 	}
+	
+	private static ArrayList<Solution> generateAllPackings(ArrayList<Location> trees, double width, double height) {
+		ArrayList<Solution> packings = new ArrayList<Solution>();
+		
+		Solution newSolution;
+		
+		// Rectilinear
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UL));
+		newSolution.packingAlgo = "rectilinear, UL corner";
+		packings.add(newSolution);
+		
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UR));
+		newSolution.packingAlgo = "rectilinear, UR corner";
+		packings.add(newSolution);
+		
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BL));
+		newSolution.packingAlgo = "rectilinear, BL corner";
+		packings.add(newSolution);
+		
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BR));
+		newSolution.packingAlgo = "rectilinear, BR corner";
+		packings.add(newSolution);
+		
+		System.err.println("Generated all Rectilinear packings");
+		
+		// Hex
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V));
+		newSolution.packingAlgo = "hex, UL corner, V direction";
+		packings.add(newSolution);
+
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.H));
+		newSolution.packingAlgo = "hex, UL corner, H direction";
+		packings.add(newSolution);
+		
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UR, PackAlgos.Direction.V));
+		newSolution.packingAlgo = "hex, UR corner, V direction";
+		packings.add(newSolution);
+
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UR, PackAlgos.Direction.H));
+		newSolution.packingAlgo = "hex, UR corner, H direction";
+		packings.add(newSolution);
+		
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BL, PackAlgos.Direction.V));
+		newSolution.packingAlgo = "hex, BL corner, V direction";
+		packings.add(newSolution);
+		
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BL, PackAlgos.Direction.H));
+		newSolution.packingAlgo = "hex, BL corner, H direction";
+		packings.add(newSolution);
+		
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BR, PackAlgos.Direction.V));
+		newSolution.packingAlgo = "hex, BR corner, V direction";
+		packings.add(newSolution);
+		
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BR, PackAlgos.Direction.H));
+		newSolution.packingAlgo = "hex, BR corner, H direction";
+		packings.add(newSolution);
+		
+		System.err.println("Generated all Hex packings");
+		
+		// Physical
+		newSolution = new Solution(PackAlgos.physical(trees, width, height));
+		newSolution.packingAlgo = "physical";
+		packings.add(newSolution);
+
+		System.err.println("Generated Physical packing");
+		
+		return packings;
+	}
+	
+	
+	
 }
