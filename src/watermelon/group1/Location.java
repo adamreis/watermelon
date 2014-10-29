@@ -22,6 +22,14 @@ public class Location {
     	return Math.sqrt(distanceSquared(x1, y1, x2, y2));
     }
     
+    public double distanceSquared(Location comparison) {
+    	return distanceSquared(this, comparison);
+    }
+    
+    public double distance(Location comparison) {
+    	return distance(this, comparison);
+    }
+    
     static public double distanceSquared(Location l1, Location l2) {
     	return distanceSquared(l1.x, l1.y, l2.x, l2.y);
     }
