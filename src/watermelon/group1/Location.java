@@ -37,4 +37,8 @@ public class Location {
     static public double distance(Location l1, Location l2) {
     	return distance(l1.x, l1.y, l2.x, l2.y);
     }
+    
+    static public boolean equals(Location l1, Location l2) {
+    	return l1.x == l2.x && l1.y == l2.y;
+    }
 }
