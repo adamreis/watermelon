@@ -8,17 +8,20 @@ public class Solution {
 	public ArrayList<SeedNode> seedNodes;
 	public String packingAlgo;
 	public String coloringAlgo;
+	public String jiggleAlgo;
 
 	public Solution(ArrayList<Location> seeds) {
 		this.seedNodes = generateSeedGraph(seeds);
 		this.packingAlgo = "";
 		this.coloringAlgo = "";
+		this.jiggleAlgo = "";
 	}
 	
 	public Solution() {
 		this.seedNodes = new ArrayList<SeedNode>();
 		this.packingAlgo = "";
 		this.coloringAlgo = "";
+		this.jiggleAlgo = "none";
 	}
 	
 	public Solution deepDuplicate() {
@@ -29,8 +32,13 @@ public class Solution {
 		}
 		newSolution.seedNodes = generateSeedGraph(locations);
 		
+		for (int i = 0; i < this.seedNodes.size(); i++) {
+			newSolution.seedNodes.get(i).ploidy = this.seedNodes.get(i).ploidy;
+		}
+		
 		newSolution.packingAlgo = this.packingAlgo;
 		newSolution.coloringAlgo = this.coloringAlgo;
+		newSolution.jiggleAlgo = this.jiggleAlgo;
 		
 		return newSolution;
 	}
