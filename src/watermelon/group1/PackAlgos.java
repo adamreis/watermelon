@@ -1,6 +1,8 @@
 package watermelon.group1;
 
 import java.util.*;
+import java.io.*;
+
 import watermelon.group1.Consts;
 import watermelon.group1.Location;
 import watermelon.group1.Vector2D;
@@ -9,8 +11,8 @@ public class PackAlgos {
 	public static enum Corner { UL, BL, UR, BR };
 	public static enum Direction { H, V };
 	
-	public static final int MAX_JIGGLES = 500;
-	public static final double MIN_JIGGLE_MOVE = 0.001;
+	private static final int MAX_JIGGLES = 500;
+	private static final double MIN_JIGGLE_MOVE = 0.001;
 	private static final double LOCATION_GRANULARITY = 0.25;
 	
 	private static boolean closeToTree(double x, double y, ArrayList<Location> trees) {
@@ -195,9 +197,14 @@ public class PackAlgos {
 		return success;
 	}
 	
-	public static ArrayList<Location> physical(ArrayList<Location> trees, double width, double height) {
+	private static ArrayList<Location> physicalWithExisting(ArrayList<Location> trees, ArrayList<Location> existingLocations, double width, double height) {
 		ArrayList<Location> locations = new ArrayList<Location>();
-				
+		
+		if (existingLocations != null) {
+			for (Location location : existingLocations)
+				locations.add(location);
+		}
+		
 		Location tryLocation = null;
 		ArrayList<Location> tryLocations = null;
 		
@@ -245,6 +252,92 @@ public class PackAlgos {
 			
 			locations = tryLocations;
 		}
+		
+		return locations;
+	}
+	
+	public static ArrayList<Location> physical(ArrayList<Location> trees, double width, double height) {
+		return physicalWithExisting(trees, null, width, height);
+	}
+	
+	// Returns number of circles and scaling factor
+	private static double[] bestKnownNumCircles(double dimension) {
+		int num, lastNum = 0;
+		double scale, lastScale = 0;
+		double[] res = {0.0, 0.0};
+		
+		// Search the radius file to find the highest number of circles a square of size dimension*dimension can accommodate
+		File file = new File("watermelon/group1/bestKnown/radius.txt");
+		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				String[] tokens = line.split(" ");
+				num = Integer.parseInt(tokens[0]);
+				scale = 1.0 / Double.parseDouble(tokens[1]);
+				if (scale > dimension)
+					break;
+				
+				lastNum = num;
+				lastScale = scale;
+			}
+			br.close();
+		} catch (IOException e) {
+			System.err.printf("Error: Unable to open radius.txt\n");
+			return null;
+		}
+
+		if (lastScale > dimension)
+			return null;
+		
+		res[0] = (double) lastNum;
+		res[1] = lastScale;
+		
+		return res;
+	}
+	
+	private static ArrayList<Location> getBestKnownLocations(int num, double scale, double dimension) {
+		ArrayList<Location> locations = new ArrayList<Location>();
+		
+		// Search the radius file to find the highest number of circles a square of size dimension*dimension can accommodate
+		File file = new File("watermelon/group1/bestKnown/csq" + Integer.toString(num) + ".txt");
+		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				line.trim();
+				String[] tokens = line.split("[ ]+");
+				locations.add(new Location(dimension/2 + Double.parseDouble(tokens[2])*scale, dimension/2 + Double.parseDouble(tokens[3])*scale));
+			}
+			br.close();
+		} catch (IOException e) {
+			System.err.printf("Error: Unable to open square file.txt\n");
+			return null;
+		}
+		
+		return locations;
+	}
+	
+	public static ArrayList<Location> bestKnown(ArrayList<Location> trees, double width, double height) {
+		double dimension = Math.min(width, height);
+		double best[] = bestKnownNumCircles(dimension);
+		
+		if (best == null)
+			return null;
+		
+		int num = (int) best[0];
+		double scale = best[1];
+		
+		// Open the corresponding coordinates file and create the locations
+		ArrayList<Location> tentativeLocations = getBestKnownLocations(num, scale, dimension);
+		
+		// Remove tree intersections
+		ArrayList<Location> locations = new ArrayList<Location>();
+		for (Location tentativeLocation : tentativeLocations) {
+			if (!closeToTree(tentativeLocation.x, tentativeLocation.y, trees))
+				locations.add(tentativeLocation);
+		}
+		
+		// Fill in the remaining space with a physical packing
+		locations = physicalWithExisting(trees, locations, width, height);
 		
 		return locations;
 	}
