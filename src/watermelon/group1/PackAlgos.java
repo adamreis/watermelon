@@ -229,9 +229,14 @@ public class PackAlgos {
 		return success;
 	}
 	
-	public static ArrayList<Location> physical(ArrayList<Location> trees, double width, double height) {
+	private static ArrayList<Location> physicalWithExisting(ArrayList<Location> trees, ArrayList<Location> existingLocations, double width, double height) {
 		ArrayList<Location> locations = new ArrayList<Location>();
-				
+		
+		if (existingLocations != null) {
+			for (Location location : existingLocations)
+				locations.add(location);
+		}
+		
 		Location tryLocation = null;
 		while (true) {
 			// Deep copy the existing best locations
@@ -259,6 +264,10 @@ public class PackAlgos {
 		}
 		
 		return locations;
+	}
+	
+	public static ArrayList<Location> physical(ArrayList<Location> trees, double width, double height) {
+		return physicalWithExisting(trees, null, width, height);
 	}
 	
 	// Returns number of circles and scaling factor
@@ -330,15 +339,15 @@ public class PackAlgos {
 		// Open the corresponding coordinates file and create the locations
 		ArrayList<Location> tentativeLocations = getBestKnownLocations(num, scale, dimension);
 		
-		// Fill in the remaining space with a simple hex packing
-		// TODO
-		
 		// Remove tree intersections
 		ArrayList<Location> locations = new ArrayList<Location>();
 		for (Location tentativeLocation : tentativeLocations) {
 			if (!closeToTree(tentativeLocation.x, tentativeLocation.y, trees))
 				locations.add(tentativeLocation);
 		}
+		
+		// Fill in the remaining space with a physical packing
+		locations = physicalWithExisting(trees, locations, width, height);
 		
 		return locations;
 	}

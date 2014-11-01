@@ -160,6 +160,13 @@ public class Player extends watermelon.sim.Player {
 		
 		System.err.println("Generated all Hex packings");
 		
+		// Best Known
+		newSolution = new Solution(PackAlgos.bestKnown(trees, width, height));
+		newSolution.packingAlgo = "bestKnown";
+		packings.add(newSolution);
+
+		System.err.println("Generated Best Known packing");
+		
 		// Physical
 		newSolution = new Solution(PackAlgos.physical(trees, width, height));
 		newSolution.packingAlgo = "physical";
