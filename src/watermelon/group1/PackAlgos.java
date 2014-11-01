@@ -9,8 +9,9 @@ public class PackAlgos {
 	public static enum Corner { UL, BL, UR, BR };
 	public static enum Direction { H, V };
 	
-	public static final int MAX_JIGGLES = 50000;
+	public static final int MAX_JIGGLES = 500;
 	public static final double MIN_JIGGLE_MOVE = 0.001;
+	private static final double LOCATION_GRANULARITY = 0.25;
 	
 	private static boolean closeToTree(double x, double y, ArrayList<Location> trees) {
 		for (Location tree : trees) {
@@ -122,42 +123,6 @@ public class PackAlgos {
 		return locations;
 	}
 	
-	private static Location findSparseLocation(ArrayList<Location> locations, ArrayList<Location> trees, double width, double height) {
-		Location bestLocation = new Location(0,0);
-		double minDistance = Double.MAX_VALUE;
-		
-		for (double x = Consts.SEED_RADIUS; x < width - Consts.SEED_RADIUS; x += 0.1) {
-			for (double y = Consts.SEED_RADIUS; y < height - Consts.SEED_RADIUS; y += 0.1) {
-				double d = 0;
-				double ds = 0;
-				
-				boolean overlap = false;
-				
-				for (Location tree : trees) {
-					if ((ds = Location.distance(x, y, tree.x, tree.y)) != 0)
-						d += Math.max(0, Consts.SEED_RADIUS + Consts.TREE_RADIUS - ds);
-					else
-						overlap = true;
-				}
-				
-				for (Location location : locations) {
-					if ((ds = Location.distance(x, y, location.x, location.y)) != 0)
-						d += Math.max(0, 2*Consts.SEED_RADIUS - ds);
-					else
-						overlap = true;
-				}
-				
-				if (!overlap && d < minDistance) {
-					minDistance = d;
-					bestLocation.x = x;
-					bestLocation.y = y;
-				}
-			}	
-		}
-
-		return bestLocation;
-	}
-	
 	private static boolean jiggleLocations(ArrayList<Location> locations, ArrayList<Location> trees, double width, double height) {
 		// Set up the vectors that will move each location
 		ArrayList<Vector2D> vectors = new ArrayList<Vector2D>(locations.size());
@@ -214,7 +179,7 @@ public class PackAlgos {
 		
 		boolean success = true;
 		
-		// Move each location by its vector
+		// Move each location by its vector and ensure its not a zero vector because it's balanced between trees
 		for (int i = 0; i < locations.size(); i++) {
 			Vector2D v = vectors.get(i);
 			if (!v.isNone()) {
@@ -222,6 +187,9 @@ public class PackAlgos {
 				locations.get(i).x += vectors.get(i).x;
 				locations.get(i).y += vectors.get(i).y;
 			}
+			
+			if (closeToTree(locations.get(i).x, locations.get(i).y, trees))
+				success = false;
 		}
 		
 		return success;
@@ -231,29 +199,51 @@ public class PackAlgos {
 		ArrayList<Location> locations = new ArrayList<Location>();
 				
 		Location tryLocation = null;
+		ArrayList<Location> tryLocations = null;
+		
 		while (true) {
-			// Deep copy the existing best locations
-			ArrayList<Location> tryLocations = new ArrayList<Location>();
-			for (Location location : locations)
-				tryLocations.add(new Location(location));
-			
-			// Place a new seed on the field
-			tryLocation = findSparseLocation(tryLocations, trees, width, height);
-			tryLocations.add(tryLocation);
-			
-			// Jiggle the locations until they all fit or we fail
+			// Try various places to place a new seed on the field
 			boolean success = false;
-			for (int i = 0; i < MAX_JIGGLES; i++) {
-				success = jiggleLocations(tryLocations, trees, width, height);
+			
+			for (double x = Consts.SEED_RADIUS; x < width - Consts.SEED_RADIUS; x += LOCATION_GRANULARITY) {
+				for (double y = Consts.SEED_RADIUS; y < height - Consts.SEED_RADIUS; y += LOCATION_GRANULARITY) {
+					tryLocation = new Location(x, y);
+					boolean invalid = false;
+					
+					for (Location tree : trees) {
+						if (Location.distance(tryLocation, tree) < (Consts.SEED_RADIUS + Consts.TREE_RADIUS) / 2)
+							invalid = true;
+					}
+					
+					for (Location location : locations) {
+						if (Location.distance(tryLocation, location) < Consts.SEED_RADIUS)
+							invalid = true;
+					}
+					
+					// Do not try this location if it exactly overlaps an existing one (or is fairly close)
+					if (invalid) continue;
+					
+					// Deep copy the existing best locations and add the new one to try
+					tryLocations = new ArrayList<Location>();
+					for (Location location : locations)
+						tryLocations.add(new Location(location));
+					
+					tryLocations.add(tryLocation);
+					
+					for (int i = 0; i < MAX_JIGGLES; i++) {
+						success = jiggleLocations(tryLocations, trees, width, height);
+						if (success) break;
+					}
+					
+					if (success) break;
+				}
 				
-				if (success)
-					break;
+				if (success) break;
 			}
 			
-			if (!success)
-				break;
+			if (!success) break;
 			
-			locations = tryLocations;			
+			locations = tryLocations;
 		}
 		
 		return locations;
