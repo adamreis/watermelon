@@ -14,6 +14,8 @@ public class Player extends watermelon.sim.Player {
 
 	@Override
 	public ArrayList<seed> move(ArrayList<Pair> treelist, double width, double height, double s) {
+		long startTime = System.nanoTime(); 
+		
 		// Transform input parameters from simulator classes into our preferred class
 		ArrayList<Location> trees = new ArrayList<Location>();
 		for (Pair p : treelist)
@@ -47,16 +49,31 @@ public class Player extends watermelon.sim.Player {
 			}
 		}
 		
+		// Now try jiggling it
+		Solution jiggledSolution = jiggleSolution(bestSolution, s);
+		
 		// Print which configuration was best
 		System.out.println("Winning config:");
-		System.out.println("\tPacking: " + bestSolution.packingAlgo);
-		System.out.println("\tColoring: " + bestSolution.coloringAlgo);
+		System.out.println("\tPacking: " + jiggledSolution.packingAlgo);
+		System.out.println("\tColoring: " + jiggledSolution.coloringAlgo);
+		System.out.println("\tJiggling: " + jiggledSolution.jiggleAlgo);
+		
+		double estimatedTime = System.nanoTime() - startTime;
+		System.out.println("Total time: " + estimatedTime/1000000000 + "s");
 		
 		// Transform our output into the simulator classes and return it
-		return bestSolution.simRepresentation();
+		return jiggledSolution.simRepresentation();
 	}
 	
-	
+	private static Solution jiggleSolution(Solution baseSolution, double s) {
+		Solution dumbJiggleSolution = JiggleAlgos.dumbJiggle(baseSolution);
+		dumbJiggleSolution.score(s);
+		
+		// test others here
+		
+		// return whichever "jiggle solution" has the highest score
+		return dumbJiggleSolution;
+	}
 	
 	private static ArrayList<Solution> generateAllPossibleSolutions(ArrayList<Location> trees, double width, double height, double s) {
 		System.err.println("generateAllPossibleSolutions called");
