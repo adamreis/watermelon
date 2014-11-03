@@ -1,6 +1,8 @@
 package watermelon.group1;
 
 import java.util.*;
+import java.io.*;
+
 import watermelon.group1.Consts;
 import watermelon.group1.Location;
 import watermelon.group1.Vector2D;
@@ -9,8 +11,9 @@ public class PackAlgos {
 	public static enum Corner { UL, BL, UR, BR };
 	public static enum Direction { H, V };
 	
-	public static final int MAX_JIGGLES = 50000;
-	public static final double MIN_JIGGLE_MOVE = 0.001;
+	private static final int MAX_JIGGLES = 500;
+	private static final double MIN_JIGGLE_MOVE = 0.001;
+	private static final double LOCATION_GRANULARITY = 0.25;
 	
 	private static boolean closeToTree(double x, double y, ArrayList<Location> trees) {
 		for (Location tree : trees) {
@@ -122,42 +125,6 @@ public class PackAlgos {
 		return locations;
 	}
 	
-	private static Location findSparseLocation(ArrayList<Location> locations, ArrayList<Location> trees, double width, double height) {
-		Location bestLocation = new Location(0,0);
-		double minDistance = Double.MAX_VALUE;
-		
-		for (double x = Consts.SEED_RADIUS; x < width - Consts.SEED_RADIUS; x += 0.1) {
-			for (double y = Consts.SEED_RADIUS; y < height - Consts.SEED_RADIUS; y += 0.1) {
-				double d = 0;
-				double ds = 0;
-				
-				boolean overlap = false;
-				
-				for (Location tree : trees) {
-					if ((ds = Location.distance(x, y, tree.x, tree.y)) != 0)
-						d += Math.max(0, Consts.SEED_RADIUS + Consts.TREE_RADIUS - ds);
-					else
-						overlap = true;
-				}
-				
-				for (Location location : locations) {
-					if ((ds = Location.distance(x, y, location.x, location.y)) != 0)
-						d += Math.max(0, 2*Consts.SEED_RADIUS - ds);
-					else
-						overlap = true;
-				}
-				
-				if (!overlap && d < minDistance) {
-					minDistance = d;
-					bestLocation.x = x;
-					bestLocation.y = y;
-				}
-			}	
-		}
-
-		return bestLocation;
-	}
-	
 	private static boolean jiggleLocations(ArrayList<Location> locations, ArrayList<Location> trees, double width, double height) {
 		// Set up the vectors that will move each location
 		ArrayList<Vector2D> vectors = new ArrayList<Vector2D>(locations.size());
@@ -214,7 +181,7 @@ public class PackAlgos {
 		
 		boolean success = true;
 		
-		// Move each location by its vector
+		// Move each location by its vector and ensure its not a zero vector because it's balanced between trees
 		for (int i = 0; i < locations.size(); i++) {
 			Vector2D v = vectors.get(i);
 			if (!v.isNone()) {
@@ -222,39 +189,155 @@ public class PackAlgos {
 				locations.get(i).x += vectors.get(i).x;
 				locations.get(i).y += vectors.get(i).y;
 			}
+			
+			if (closeToTree(locations.get(i).x, locations.get(i).y, trees))
+				success = false;
 		}
 		
 		return success;
 	}
 	
-	public static ArrayList<Location> physical(ArrayList<Location> trees, double width, double height) {
+	private static ArrayList<Location> physicalWithExisting(ArrayList<Location> trees, ArrayList<Location> existingLocations, double width, double height) {
 		ArrayList<Location> locations = new ArrayList<Location>();
-				
+		
+		if (existingLocations != null) {
+			for (Location location : existingLocations)
+				locations.add(location);
+		}
+		
 		Location tryLocation = null;
+		ArrayList<Location> tryLocations = null;
+		
 		while (true) {
-			// Deep copy the existing best locations
-			ArrayList<Location> tryLocations = new ArrayList<Location>();
-			for (Location location : locations)
-				tryLocations.add(new Location(location));
-			
-			// Place a new seed on the field
-			tryLocation = findSparseLocation(tryLocations, trees, width, height);
-			tryLocations.add(tryLocation);
-			
-			// Jiggle the locations until they all fit or we fail
+			// Try various places to place a new seed on the field
 			boolean success = false;
-			for (int i = 0; i < MAX_JIGGLES; i++) {
-				success = jiggleLocations(tryLocations, trees, width, height);
+			
+			for (double x = Consts.SEED_RADIUS; x < width - Consts.SEED_RADIUS; x += LOCATION_GRANULARITY) {
+				for (double y = Consts.SEED_RADIUS; y < height - Consts.SEED_RADIUS; y += LOCATION_GRANULARITY) {
+					tryLocation = new Location(x, y);
+					boolean invalid = false;
+					
+					for (Location tree : trees) {
+						if (Location.distance(tryLocation, tree) < (Consts.SEED_RADIUS + Consts.TREE_RADIUS) / 2)
+							invalid = true;
+					}
+					
+					for (Location location : locations) {
+						if (Location.distance(tryLocation, location) < Consts.SEED_RADIUS)
+							invalid = true;
+					}
+					
+					// Do not try this location if it exactly overlaps an existing one (or is fairly close)
+					if (invalid) continue;
+					
+					// Deep copy the existing best locations and add the new one to try
+					tryLocations = new ArrayList<Location>();
+					for (Location location : locations)
+						tryLocations.add(new Location(location));
+					
+					tryLocations.add(tryLocation);
+					
+					for (int i = 0; i < MAX_JIGGLES; i++) {
+						success = jiggleLocations(tryLocations, trees, width, height);
+						if (success) break;
+					}
+					
+					if (success) break;
+				}
 				
-				if (success)
-					break;
+				if (success) break;
 			}
 			
-			if (!success)
-				break;
+			if (!success) break;
 			
-			locations = tryLocations;			
+			locations = tryLocations;
 		}
+		
+		return locations;
+	}
+	
+	public static ArrayList<Location> physical(ArrayList<Location> trees, double width, double height) {
+		return physicalWithExisting(trees, null, width, height);
+	}
+	
+	// Returns number of circles and scaling factor
+	private static double[] bestKnownNumCircles(double dimension) {
+		int num, lastNum = 0;
+		double scale, lastScale = 0;
+		double[] res = {0.0, 0.0};
+		
+		// Search the radius file to find the highest number of circles a square of size dimension*dimension can accommodate
+		File file = new File("watermelon/group1/bestKnown/radius.txt");
+		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				String[] tokens = line.split(" ");
+				num = Integer.parseInt(tokens[0]);
+				scale = 1.0 / Double.parseDouble(tokens[1]);
+				if (scale > dimension)
+					break;
+				
+				lastNum = num;
+				lastScale = scale;
+			}
+			br.close();
+		} catch (IOException e) {
+			System.err.printf("Error: Unable to open radius.txt\n");
+			return null;
+		}
+
+		if (lastScale > dimension)
+			return null;
+		
+		res[0] = (double) lastNum;
+		res[1] = lastScale;
+		
+		return res;
+	}
+	
+	private static ArrayList<Location> getBestKnownLocations(int num, double scale, double dimension) {
+		ArrayList<Location> locations = new ArrayList<Location>();
+		
+		// Search the radius file to find the highest number of circles a square of size dimension*dimension can accommodate
+		File file = new File("watermelon/group1/bestKnown/csq" + Integer.toString(num) + ".txt");
+		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				line.trim();
+				String[] tokens = line.split("[ ]+");
+				locations.add(new Location(dimension/2 + Double.parseDouble(tokens[2])*scale, dimension/2 + Double.parseDouble(tokens[3])*scale));
+			}
+			br.close();
+		} catch (IOException e) {
+			System.err.printf("Error: Unable to open square file.txt\n");
+			return null;
+		}
+		
+		return locations;
+	}
+	
+	public static ArrayList<Location> bestKnown(ArrayList<Location> trees, double width, double height) {
+		double dimension = Math.min(width, height);
+		double best[] = bestKnownNumCircles(dimension);
+		
+		if (best == null)
+			return null;
+		
+		int num = (int) best[0];
+		double scale = best[1];
+		
+		// Open the corresponding coordinates file and create the locations
+		ArrayList<Location> tentativeLocations = getBestKnownLocations(num, scale, dimension);
+		
+		// Remove tree intersections
+		ArrayList<Location> locations = new ArrayList<Location>();
+		for (Location tentativeLocation : tentativeLocations) {
+			if (!closeToTree(tentativeLocation.x, tentativeLocation.y, trees))
+				locations.add(tentativeLocation);
+		}
+		
+		// Fill in the remaining space with a physical packing
+		locations = physicalWithExisting(trees, locations, width, height);
 		
 		return locations;
 	}
