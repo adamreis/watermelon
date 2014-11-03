@@ -9,14 +9,12 @@ public class Solution {
 	public String packingAlgo;
 	public String coloringAlgo;
 	public String jiggleAlgo;
-	public double score;
 
 	public Solution(ArrayList<Location> seeds) {
 		this.seedNodes = generateSeedGraph(seeds);
 		this.packingAlgo = "";
 		this.coloringAlgo = "";
 		this.jiggleAlgo = "";
-		this.score = -1.0;
 	}
 	
 	public Solution() {
@@ -24,7 +22,6 @@ public class Solution {
 		this.packingAlgo = "";
 		this.coloringAlgo = "";
 		this.jiggleAlgo = "none";
-		this.score = -1.0;
 	}
 	
 	public Solution deepDuplicate() {
@@ -42,7 +39,6 @@ public class Solution {
 		newSolution.packingAlgo = this.packingAlgo;
 		newSolution.coloringAlgo = this.coloringAlgo;
 		newSolution.jiggleAlgo = this.jiggleAlgo;
-		newSolution.score = this.score;
 		
 		return newSolution;
 	}
@@ -67,13 +63,6 @@ public class Solution {
 		
 		return nodes;
 	}
-
-	public void score(double s) {
-		ArrayList<seed> seedList = this.simRepresentation();
-		
-		this.score = scoreSeeds(seedList, s);
-	}
-	
 	
 	public ArrayList<seed> simRepresentation() {
 		ArrayList<seed> seeds = new ArrayList<seed>();
@@ -89,43 +78,25 @@ public class Solution {
 		return seeds;
 	}
 	
-	private double scoreSeeds(ArrayList<seed> seedlist, double s) {
+	public double getScore(double scoringMultiplier) {
 		double total = 0;
-		
-		for (int i = 0; i < seedlist.size(); i++) {
-			double score;
+		for (SeedNode node : seedNodes) {
+			double nodeScore;
 			double chance = 0.0;
-			double totaldis = 0.0;
-			double difdis = 0.0;
-			for (int j = 0; j < seedlist.size(); j++) {
-				if (j != i) {
-					totaldis = totaldis
-							+ Math.pow(
-									distanceseed(seedlist.get(i),
-											seedlist.get(j)), -2);
-				}
+			double allInfluences = 0.0;
+			double oppositeInfluences = 0.0;
+			for (SeedNode comparisonNode : seedNodes) {
+				if (comparisonNode == node)
+					continue;
+				allInfluences += 1/node.distanceSquared(comparisonNode);
+				if (node.ploidy != SeedNode.Ploidies.NONE && node.ploidy != comparisonNode.ploidy)
+					oppositeInfluences += 1/node.distanceSquared(comparisonNode);
 			}
-			for (int j = 0; j < seedlist.size(); j++) {
-				if (j != i
-						&& ((seedlist.get(i).tetraploid && !seedlist.get(j).tetraploid) || (!seedlist
-								.get(i).tetraploid && seedlist.get(j).tetraploid))) {
-					difdis = difdis
-							+ Math.pow(
-									distanceseed(seedlist.get(i),
-											seedlist.get(j)), -2);
-				}
-			}
-			//System.out.println(totaldis);
-			//System.out.println(difdis);
-			chance = difdis / totaldis;
-			score = chance + (1 - chance) * s;
-			total = total + score;
+			chance = oppositeInfluences/allInfluences;
+			nodeScore = chance + (1 - chance) * scoringMultiplier;
+			total += nodeScore;
 		}
 		return total;
-	}
-	
-	private static double distanceseed(seed a, seed b) {
-		return Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 	}
 
 }
