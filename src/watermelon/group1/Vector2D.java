@@ -25,6 +25,6 @@ public class Vector2D {
     }
     
     public boolean isNone() {
-    	return this.x == 0 && this.y == 0;
+    	return Math.abs(this.x) <= Consts.EPSILON && Math.abs(this.y) <= Consts.EPSILON;
     }
 }
