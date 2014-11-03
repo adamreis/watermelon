@@ -3,15 +3,22 @@ package watermelon.group1;
 import java.util.ArrayList;
 
 import watermelon.sim.seed;
+import watermelon.group1.Location;
 
 public class Solution {
 	public ArrayList<SeedNode> seedNodes;
 	public String packingAlgo;
 	public String coloringAlgo;
 	public String jiggleAlgo;
+	private ArrayList<Location> trees;
+	private double width;
+	private double height;
 
-	public Solution(ArrayList<Location> seeds) {
+	public Solution(ArrayList<Location> seeds, ArrayList<Location> trees, double width, double height) {
 		this.seedNodes = generateSeedGraph(seeds);
+		this.trees = trees;
+		this.width = width;
+		this.height = height;
 		this.packingAlgo = "";
 		this.coloringAlgo = "";
 		this.jiggleAlgo = "";
@@ -76,6 +83,25 @@ public class Solution {
 		}
 		
 		return seeds;
+	}
+	
+	public boolean isValid() {
+		for (SeedNode node : seedNodes) {
+			if (node.x < Consts.SEED_RADIUS || node.x > width - Consts.SEED_RADIUS || node.y < Consts.SEED_RADIUS || node.y > height - Consts.SEED_RADIUS)
+				return false;
+			
+			for (Location tree : trees) {
+				if (Location.distance(node, tree) < Consts.SEED_RADIUS + Consts.TREE_RADIUS)
+					return false;
+			}
+			
+			for (SeedNode otherNode : seedNodes) {
+				if (otherNode != node && Location.distance(node, otherNode) < 2*Consts.SEED_RADIUS)
+					return false;
+			}
+		}
+		
+		return true;
 	}
 	
 	public double getScore(double scoringMultiplier) {
