@@ -17,7 +17,7 @@ public class PackAlgos {
 	
 	private static boolean closeToTree(double x, double y, ArrayList<Location> trees) {
 		for (Location tree : trees) {
-			if (Location.distanceSquared(x,  y, tree.x, tree.y) < ((Consts.SEED_RADIUS + Consts.TREE_RADIUS) * (Consts.SEED_RADIUS + Consts.TREE_RADIUS)))
+			if (Location.distance(x,  y, tree.x, tree.y) < (Consts.SEED_RADIUS + Consts.TREE_RADIUS - Consts.EPSILON))
 				return true;
 		}
 		
@@ -184,6 +184,7 @@ public class PackAlgos {
 		// Move each location by its vector and ensure its not a zero vector because it's balanced between trees
 		for (int i = 0; i < locations.size(); i++) {
 			Vector2D v = vectors.get(i);
+			
 			if (!v.isNone()) {
 				success = false;
 				locations.get(i).x += vectors.get(i).x;
