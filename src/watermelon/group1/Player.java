@@ -28,8 +28,8 @@ public class Player extends watermelon.sim.Player {
 		if (testMethod) {
 			possibleSolutions = new ArrayList<Solution>();
 			// choose a packing method
-			//Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V), trees, width, height);
-			Solution solution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
+			Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V), trees, width, height);
+			//Solution solution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
 			ColoringAlgos.colorMaxValue(solution.seedNodes, new Location(width/2, height/2));
 			solution.coloringAlgo = "test";
 			solution.packingAlgo = "test";
@@ -70,12 +70,13 @@ public class Player extends watermelon.sim.Player {
 	}
 	
 	private static Solution jiggleSolution(Solution baseSolution, double s) {
-		Solution dumbJiggleSolution = JiggleAlgos.dumbJiggle(baseSolution);
+		//Solution dumbJiggleSolution = JiggleAlgos.dumbJiggle(baseSolution);
+		Solution jiggleIterativeSolution = JiggleAlgos.jiggleIterative(baseSolution, s);
 		
 		// test others here
 		
 		// return whichever "jiggle solution" has the highest score
-		return dumbJiggleSolution;
+		return jiggleIterativeSolution;
 	}
 	
 	private static ArrayList<Solution> generateAllPossibleSolutions(ArrayList<Location> trees, double width, double height, double s) {
