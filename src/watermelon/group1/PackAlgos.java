@@ -46,7 +46,7 @@ public class PackAlgos {
 		
 		if (treeToAvoid != null) {
 			xStart = xStart == Consts.SEED_RADIUS ? xStart + treeToAvoid.x % 2 : xStart - treeToAvoid.x % 2;
-			yStart = yStart == Consts.SEED_RADIUS ? yStart + treeToAvoid.x % 2 : yStart - treeToAvoid.y % 2;
+			yStart = yStart == Consts.SEED_RADIUS ? yStart + treeToAvoid.y % 2 : yStart - treeToAvoid.y % 2;
 		}
 				
 		ArrayList<Location> locations = new ArrayList<Location>();
