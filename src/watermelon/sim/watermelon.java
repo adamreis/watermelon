@@ -331,7 +331,7 @@ public class watermelon {
 	void playStep() {
 		seedlist = player.move(treelist, W, L, s);
 		if (validateseed(seedlist)) {
-			System.out.printf("total score is %f\n", calculatescore());
+			System.out.printf("total score is %f with %d seeds\n", calculatescore(), seedlist.size());
 		}
 
 	}
