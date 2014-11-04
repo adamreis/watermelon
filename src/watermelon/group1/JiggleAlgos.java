@@ -5,13 +5,11 @@ import watermelon.group1.Solution;
 public class JiggleAlgos {
 
 	
-	public static Solution dumbJiggle(Solution baseSolution) {
+	public static void dumbJiggle(Solution baseSolution) {
 		Solution newSolution = baseSolution.deepDuplicate();
 		newSolution.jiggleAlgo = "dumbJiggle";
 		
 		// JIGGLE
-		
-		return newSolution;
 	}
 	
 	private static boolean jiggleAllDirections(Solution solution, SeedNode seedNode, double s) {
@@ -57,7 +55,7 @@ public class JiggleAlgos {
 		return improved;
 	}
 	
-	public static Solution jiggleIterative(Solution solution, double s) {
+	public static void jiggleIterative(Solution solution, double s) {
 		int i = 0;
 		int maxIterations = 100;
 		boolean improved;
@@ -69,7 +67,5 @@ public class JiggleAlgos {
 			for (SeedNode seedNode : solution.seedNodes)
 				improved = improved || jiggleAllDirections(solution, seedNode, s);
 		} while (i++ < maxIterations && improved);
-		
-		return solution;
 	}
 }
