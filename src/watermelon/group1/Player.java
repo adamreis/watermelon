@@ -175,21 +175,21 @@ public class Player extends watermelon.sim.Player {
 		
 		System.err.println("Generated all Hex packings");
 		
-//		// Best Known
-//		ArrayList<Location> packing = PackAlgos.bestKnown(trees, width, height);
-//		if (packing != null) {
-//			newSolution = new Solution(packing, trees, width, height);
-//			newSolution.packingAlgo = "bestKnown";
-//			packings.add(newSolution);
-//			System.err.println("Generated Best Known packing");
-//		} else {
-//			System.err.println("Failed to generate Best Known packing");
-//		}
-//		
-//		// Physical
-//		newSolution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
-//		newSolution.packingAlgo = "physical";
-//		packings.add(newSolution);
+		// Best Known
+		ArrayList<Location> packing = PackAlgos.bestKnown(trees, width, height);
+		if (packing != null) {
+			newSolution = new Solution(packing, trees, width, height);
+			newSolution.packingAlgo = "bestKnown";
+			packings.add(newSolution);
+			System.err.println("Generated Best Known packing");
+		} else {
+			System.err.println("Failed to generate Best Known packing");
+		}
+		
+		// Physical
+		newSolution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
+		newSolution.packingAlgo = "physical";
+		packings.add(newSolution);
 
 		System.err.println("Generated Physical packing");
 		
