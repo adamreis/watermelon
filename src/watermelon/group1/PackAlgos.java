@@ -23,10 +23,23 @@ public class PackAlgos {
 		
 		return false;
 	}
-	
-	public static ArrayList<Location> rectilinear(ArrayList<Location> trees, double width, double height, Corner corner, Location treeToAvoid) {
-		double x, y, xStart, yStart;
-		int xSign, ySign;
+	public static ArrayList<Location> rectilinear(ArrayList<Location> trees, double width, double height, Corner corner, boolean spreadApart, Location treeToAvoid) {
+		double x, y, xStart, yStart, extraX, extraY, xSpacing, ySpacing;
+		int xSign, ySign, numX, numY;
+		
+		if (spreadApart) {
+			numX = (int) Math.floor(width / (2 * Consts.SEED_RADIUS));
+			numY = (int) Math.floor(height / (2 * Consts.SEED_RADIUS));
+			
+			extraX = width - numX * 2 * Consts.SEED_RADIUS;
+			extraY = height - numY * 2 * Consts.SEED_RADIUS;
+			
+			xSpacing = extraX / (numX - 1);
+			ySpacing = extraY / (numY - 1);
+		} else {
+			xSpacing = 0;
+			ySpacing = 0;
+		}
 		
 		if (corner == Corner.UL || corner == Corner.BL) {
 			xStart = Consts.SEED_RADIUS;
@@ -45,8 +58,10 @@ public class PackAlgos {
 		}
 		
 		if (treeToAvoid != null) {
-			xStart = xStart == Consts.SEED_RADIUS ? xStart + treeToAvoid.x % 2 : xStart - treeToAvoid.x % 2;
-			yStart = yStart == Consts.SEED_RADIUS ? yStart + treeToAvoid.y % 2 : yStart - treeToAvoid.y % 2;
+			xStart = corner == Corner.UL || corner == Corner.BL ? 
+					xStart + (treeToAvoid.x + Consts.SEED_RADIUS) % 2*Consts.SEED_RADIUS : xStart - (treeToAvoid.x + Consts.SEED_RADIUS) % 2*Consts.SEED_RADIUS;
+			yStart = corner == Corner.UL || corner == Corner.UR ? 
+					yStart + (treeToAvoid.y + Consts.SEED_RADIUS) % 2*Consts.SEED_RADIUS : yStart - (treeToAvoid.y + Consts.SEED_RADIUS) % 2*Consts.SEED_RADIUS;
 		}
 				
 		ArrayList<Location> locations = new ArrayList<Location>();
@@ -61,10 +76,10 @@ public class PackAlgos {
 				if (!closeToTree(x, y, trees))
 					locations.add(new Location(x, y));
 				
-				x += 2*Consts.SEED_RADIUS * xSign;
+				x += (2*Consts.SEED_RADIUS + xSpacing) * xSign;
 			}
 			
-			y += 2*Consts.SEED_RADIUS * ySign;
+			y += (2*Consts.SEED_RADIUS + ySpacing)* ySign;
 		}
 		
 		return locations;
@@ -194,14 +209,18 @@ public class PackAlgos {
 		// Move each location by its vector and ensure its not a zero vector because it's balanced between trees
 		for (int i = 0; i < locations.size(); i++) {
 			Vector2D v = vectors.get(i);
+			Location location = locations.get(i);
 			
 			if (!v.isNone()) {
 				success = false;
-				locations.get(i).x += vectors.get(i).x;
-				locations.get(i).y += vectors.get(i).y;
+				location.x += v.x;
+				location.y += v.y;
 			}
 			
-			if (closeToTree(locations.get(i).x, locations.get(i).y, trees))
+			if (location.x < Consts.SEED_RADIUS - Consts.EPSILON || location.x > width - (Consts.SEED_RADIUS - Consts.EPSILON) || location.y < Consts.SEED_RADIUS - Consts.EPSILON || location.y > height - (Consts.SEED_RADIUS - Consts.EPSILON))
+				success = false;
+			
+			if (closeToTree(location.x, location.y, trees))
 				success = false;
 		}
 		
@@ -279,6 +298,11 @@ public class PackAlgos {
 		
 		// Search the radius file to find the highest number of circles a square of size dimension*dimension can accommodate
 		File file = new File("watermelon/group1/bestKnown/radius.txt");
+		if (!file.exists()) {
+			System.err.printf("Error: Unable to open radius.txt\n");
+			return null;
+		}
+		
 		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			String line;
 			while ((line = br.readLine()) != null) {
@@ -311,6 +335,11 @@ public class PackAlgos {
 		
 		// Search the radius file to find the highest number of circles a square of size dimension*dimension can accommodate
 		File file = new File("watermelon/group1/bestKnown/csq" + Integer.toString(num) + ".txt");
+		if (!file.exists()) {
+			System.err.printf("Error: Unable to open square file.txt\n");
+			return null;
+		}
+		
 		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			String line;
 			while ((line = br.readLine()) != null) {
@@ -339,6 +368,9 @@ public class PackAlgos {
 		
 		// Open the corresponding coordinates file and create the locations
 		ArrayList<Location> tentativeLocations = getBestKnownLocations(num, scale, dimension);
+		
+		if (tentativeLocations == null)
+			return null;
 		
 		// Remove tree intersections
 		ArrayList<Location> locations = new ArrayList<Location>();

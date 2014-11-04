@@ -45,9 +45,9 @@ public class watermelon {
 	static Player player;
 
 	static double dimension = 100.0;
-	static double distoseed = 2.00;
-	static double distowall = 1.00;
-	static double distotree = 2.00;
+	static double distoseed = 1.999999;
+	static double distowall = 0.999999;
+	static double distotree = 1.999999;
 	static double s = 0.00;
 	static double total = 0.00;
 
@@ -331,7 +331,7 @@ public class watermelon {
 	void playStep() {
 		seedlist = player.move(treelist, W, L, s);
 		if (validateseed(seedlist)) {
-			System.out.printf("total score is %f\n", calculatescore());
+			System.out.printf("total score is %f with %d seeds\n", calculatescore(), seedlist.size());
 		}
 
 	}

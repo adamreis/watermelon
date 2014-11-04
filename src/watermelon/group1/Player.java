@@ -21,22 +21,19 @@ public class Player extends watermelon.sim.Player {
 		for (Pair p : treelist)
 			trees.add(new Location(p.x, p.y));
 		
-		boolean testMethod = false;
+		boolean testMethod = true;
 		ArrayList<Solution> possibleSolutions;
 		
 		// use this variable for testing a particular method
 		if (testMethod) {
 			possibleSolutions = new ArrayList<Solution>();
 			// choose a packing method
-			// Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V), trees, width, height);
-			Solution solution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
+			Solution solution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UL, false, trees.get(0)), trees, width, height);
 			ColoringAlgos.colorMaxValue(solution.seedNodes, new Location(width/2, height/2));
 			solution.coloringAlgo = "test";
 			solution.packingAlgo = "test";
 			possibleSolutions.add(solution);
-		}
-		
-		else {
+		} else {
 			// Get all possible packings/colorings
 			possibleSolutions = generateAllPossibleSolutions(trees, width, height, s);
 		}
@@ -51,10 +48,11 @@ public class Player extends watermelon.sim.Player {
 				bestSolution = solution;
 			}
 		}
-		System.err.println("Best score is " + bestScore);
+		System.err.println("Best score before jiggling is " + bestScore);
 		
 		// Now try jiggling it
 		Solution jiggledSolution = jiggleSolution(bestSolution, s);
+		System.err.println("Best score after jiggling is " + jiggledSolution.getScore(s));
 		
 		// Print which configuration was best
 		System.out.println("Winning config:");
@@ -70,12 +68,28 @@ public class Player extends watermelon.sim.Player {
 	}
 	
 	private static Solution jiggleSolution(Solution baseSolution, double s) {
-		Solution dumbJiggleSolution = JiggleAlgos.dumbJiggle(baseSolution);
+		Solution newSolution;
+		baseSolution.jiggleAlgo = "none";
+		Solution bestSolution = baseSolution;
+		ArrayList<Solution> jiggledSolutions = new ArrayList<Solution>();
+		jiggledSolutions.add(baseSolution);
 		
-		// test others here
+		newSolution = baseSolution.deepDuplicate();
+		JiggleAlgos.jiggleIterative(newSolution, s);
+		newSolution.jiggleAlgo = "iterative";
+		jiggledSolutions.add(newSolution);
 		
 		// return whichever "jiggle solution" has the highest score
-		return dumbJiggleSolution;
+		double bestScore = 0;
+		for (Solution solution : jiggledSolutions) {
+			double newScore = solution.getScore(s);
+			if (newScore > bestScore) {
+				bestScore = newScore;
+				bestSolution = solution;
+			}
+		}
+		
+		return bestSolution;
 	}
 	
 	private static ArrayList<Solution> generateAllPossibleSolutions(ArrayList<Location> trees, double width, double height, double s) {
@@ -122,24 +136,24 @@ public class Player extends watermelon.sim.Player {
 		Solution newSolution;
 		
 		// Rectilinear
-		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UL, null), trees, width, height);
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UL, false, null), trees, width, height);
 		newSolution.packingAlgo = "rectilinear, UL corner";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UR, null), trees, width, height);
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UR, false, null), trees, width, height);
 		newSolution.packingAlgo = "rectilinear, UR corner";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BL, null), trees, width, height);
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BL, false, null), trees, width, height);
 		newSolution.packingAlgo = "rectilinear, BL corner";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BR, null), trees, width, height);
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BR, false, null), trees, width, height);
 		newSolution.packingAlgo = "rectilinear, BR corner";
 		packings.add(newSolution);
 		
 		for (Location tree : trees) {
-			newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BR, tree), trees, width, height);
+			newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BR, false, tree), trees, width, height);
 			newSolution.packingAlgo = "rectilinear around tree at " + tree.x + ", " + tree.y;
 			packings.add(newSolution);
 		}
@@ -188,22 +202,23 @@ public class Player extends watermelon.sim.Player {
 		System.err.println("Generated all Hex packings");
 		
 		// Best Known
-//		newSolution = new Solution(PackAlgos.bestKnown(trees, width, height), trees, width, height);
-//		newSolution.packingAlgo = "bestKnown";
-//		packings.add(newSolution);
-//
-//		System.err.println("Generated Best Known packing");
+		ArrayList<Location> packing = PackAlgos.bestKnown(trees, width, height);
+		if (packing != null) {
+			newSolution = new Solution(packing, trees, width, height);
+			newSolution.packingAlgo = "bestKnown";
+			packings.add(newSolution);
+			System.err.println("Generated Best Known packing");
+		} else {
+			System.err.println("Failed to generate Best Known packing");
+		}
 		
-//		// Physical
-//		newSolution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
-//		newSolution.packingAlgo = "physical";
-//		packings.add(newSolution);
+		// Physical
+		newSolution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
+		newSolution.packingAlgo = "physical";
+		packings.add(newSolution);
 
 		System.err.println("Generated Physical packing");
 		
 		return packings;
 	}
-	
-	
-	
 }
