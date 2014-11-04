@@ -11,8 +11,8 @@ public class PackAlgos {
 	public static enum Corner { UL, BL, UR, BR };
 	public static enum Direction { H, V };
 	
-	private static final int MAX_JIGGLES = 500;
-	private static final double MIN_JIGGLE_MOVE = 0.001;
+	private static final int MAX_JIGGLES = 50;
+	private static final double MIN_JIGGLE_MOVE = 0.01;
 	private static final double LOCATION_GRANULARITY = 0.25;
 	
 	private static boolean closeToTree(double x, double y, ArrayList<Location> trees) {
@@ -184,14 +184,18 @@ public class PackAlgos {
 		// Move each location by its vector and ensure its not a zero vector because it's balanced between trees
 		for (int i = 0; i < locations.size(); i++) {
 			Vector2D v = vectors.get(i);
+			Location location = locations.get(i);
 			
 			if (!v.isNone()) {
 				success = false;
-				locations.get(i).x += vectors.get(i).x;
-				locations.get(i).y += vectors.get(i).y;
+				location.x += v.x;
+				location.y += v.y;
 			}
 			
-			if (closeToTree(locations.get(i).x, locations.get(i).y, trees))
+			if (location.x < Consts.SEED_RADIUS - Consts.EPSILON || location.x > width - (Consts.SEED_RADIUS - Consts.EPSILON) || location.y < Consts.SEED_RADIUS - Consts.EPSILON || location.y > height - (Consts.SEED_RADIUS - Consts.EPSILON))
+				success = false;
+			
+			if (closeToTree(location.x, location.y, trees))
 				success = false;
 		}
 		
@@ -269,6 +273,11 @@ public class PackAlgos {
 		
 		// Search the radius file to find the highest number of circles a square of size dimension*dimension can accommodate
 		File file = new File("watermelon/group1/bestKnown/radius.txt");
+		if (!file.exists()) {
+			System.err.printf("Error: Unable to open radius.txt\n");
+			return null;
+		}
+		
 		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			String line;
 			while ((line = br.readLine()) != null) {
@@ -301,6 +310,11 @@ public class PackAlgos {
 		
 		// Search the radius file to find the highest number of circles a square of size dimension*dimension can accommodate
 		File file = new File("watermelon/group1/bestKnown/csq" + Integer.toString(num) + ".txt");
+		if (!file.exists()) {
+			System.err.printf("Error: Unable to open square file.txt\n");
+			return null;
+		}
+		
 		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			String line;
 			while ((line = br.readLine()) != null) {
@@ -329,6 +343,9 @@ public class PackAlgos {
 		
 		// Open the corresponding coordinates file and create the locations
 		ArrayList<Location> tentativeLocations = getBestKnownLocations(num, scale, dimension);
+		
+		if (tentativeLocations == null)
+			return null;
 		
 		// Remove tree intersections
 		ArrayList<Location> locations = new ArrayList<Location>();
