@@ -106,11 +106,7 @@ public class PackAlgos {
 			ySign = -1;
 		}
 		
-		if (treeToAvoid != null) {
-			xStart = xStart == Consts.SEED_RADIUS ? xStart + treeToAvoid.x % 2 : xStart - treeToAvoid.x % 2;
-			yStart = yStart == Consts.SEED_RADIUS ? yStart + treeToAvoid.x % 2 : yStart - treeToAvoid.y % 2;
-		}
-				
+		ArrayList<Location> treeIntersectors = new ArrayList<Location>();
 		ArrayList<Location> locations = new ArrayList<Location>();
 		
 		x = xStart;
@@ -124,6 +120,8 @@ public class PackAlgos {
 				while (x >= Consts.SEED_RADIUS && x <= width - Consts.SEED_RADIUS) {
 					if (!closeToTree(x, y, trees))
 						locations.add(new Location(x, y));
+					else
+						treeIntersectors.add(new Location(x, y));
 					
 					x += 2*Consts.SEED_RADIUS * xSign;
 				}
@@ -138,6 +136,8 @@ public class PackAlgos {
 				while (y >= Consts.SEED_RADIUS && y <= height - Consts.SEED_RADIUS) {
 					if (!closeToTree(x, y, trees))
 						locations.add(new Location(x, y));
+					else
+						treeIntersectors.add(new Location(x, y));
 					
 					y += 2*Consts.SEED_RADIUS * ySign;
 				}
@@ -145,6 +145,32 @@ public class PackAlgos {
 				x += Consts.SQRT_3*Consts.SEED_RADIUS * xSign;
 				offset = !offset;
 			}
+		}
+		if (treeToAvoid != null) {
+			ArrayList<Location> newLocations = new ArrayList<Location>();
+			double xOff = Double.MAX_VALUE;
+			double yOff = Double.MAX_VALUE;
+			for (Location loc : treeIntersectors) {
+				double newXOff = treeToAvoid.x - loc.x;
+				double newYOff = treeToAvoid.y - loc.y;
+				if (newXOff + newYOff < xOff + yOff) {
+					xOff = newXOff;
+					yOff = newYOff;
+				}
+			}
+			for (Location loc : locations) {
+				loc.x += xOff;
+				loc.y += yOff;
+				if (inBounds(loc, width, height))
+					newLocations.add(loc);
+			}
+			for (Location loc : treeIntersectors) {
+				loc.x += xOff;
+				loc.y += yOff;
+				if (!closeToTree(loc.x, loc.y, trees) && inBounds(loc, width, height))
+						newLocations.add(loc);
+			}
+			locations = newLocations;
 		}
 		
 		return locations;
@@ -383,5 +409,10 @@ public class PackAlgos {
 		locations = physicalWithExisting(trees, locations, width, height);
 		
 		return locations;
+	}
+	
+	private static boolean inBounds(Location loc, double width, double height) {
+		return loc.x >= Consts.SEED_RADIUS && loc.x <= width - Consts.SEED_RADIUS && 
+				loc.y >= Consts.SEED_RADIUS && loc.y <= height - Consts.SEED_RADIUS;
 	}
 }

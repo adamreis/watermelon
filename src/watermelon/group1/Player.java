@@ -21,14 +21,14 @@ public class Player extends watermelon.sim.Player {
 		for (Pair p : treelist)
 			trees.add(new Location(p.x, p.y));
 		
-		boolean testMethod = true;
+		boolean testMethod = false;
 		ArrayList<Solution> possibleSolutions;
 		
 		// use this variable for testing a particular method
 		if (testMethod) {
 			possibleSolutions = new ArrayList<Solution>();
 			// choose a packing method
-			Solution solution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UL, false, trees.get(0)), trees, width, height);
+			Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BR, PackAlgos.Direction.H, trees.get(0)), trees, width, height);
 			ColoringAlgos.colorMaxValue(solution.seedNodes, new Location(width/2, height/2));
 			solution.coloringAlgo = "test";
 			solution.packingAlgo = "test";
