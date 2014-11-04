@@ -28,15 +28,13 @@ public class Player extends watermelon.sim.Player {
 		if (testMethod) {
 			possibleSolutions = new ArrayList<Solution>();
 			// choose a packing method
-			//Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V), trees, width, height);
-			Solution solution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
+			Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V), trees, width, height);
+			//Solution solution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
 			ColoringAlgos.colorMaxValue(solution.seedNodes, new Location(width/2, height/2));
 			solution.coloringAlgo = "test";
 			solution.packingAlgo = "test";
 			possibleSolutions.add(solution);
-		}
-		
-		else {
+		} else {
 			// Get all possible packings/colorings
 			possibleSolutions = generateAllPossibleSolutions(trees, width, height, s);
 		}
@@ -51,31 +49,47 @@ public class Player extends watermelon.sim.Player {
 				bestSolution = solution;
 			}
 		}
-		System.err.println("Best score is " + bestScore);
+		System.err.println("Best score before jiggling is " + bestScore);
 		
 		// Now try jiggling it
-		Solution jiggledSolution = jiggleSolution(bestSolution, s);
+		jiggleSolution(bestSolution, s);
+		System.err.println("Best score after jiggling is " + bestSolution.getScore(s));
 		
 		// Print which configuration was best
 		System.out.println("Winning config:");
-		System.out.println("\tPacking: " + jiggledSolution.packingAlgo);
-		System.out.println("\tColoring: " + jiggledSolution.coloringAlgo);
-		System.out.println("\tJiggling: " + jiggledSolution.jiggleAlgo);
+		System.out.println("\tPacking: " + bestSolution.packingAlgo);
+		System.out.println("\tColoring: " + bestSolution.coloringAlgo);
+		System.out.println("\tJiggling: " + bestSolution.jiggleAlgo);
 		
 		double estimatedTime = System.nanoTime() - startTime;
 		System.out.println("Total time: " + estimatedTime/1000000000 + "s");
 		
 		// Transform our output into the simulator classes and return it
-		return jiggledSolution.simRepresentation();
+		return bestSolution.simRepresentation();
 	}
 	
 	private static Solution jiggleSolution(Solution baseSolution, double s) {
-		Solution dumbJiggleSolution = JiggleAlgos.dumbJiggle(baseSolution);
+		Solution newSolution;
+		Solution bestSolution = baseSolution;
+		ArrayList<Solution> jiggledSolutions = new ArrayList<Solution>();
+		jiggledSolutions.add(baseSolution);
 		
-		// test others here
+		newSolution = baseSolution.deepDuplicate();
+		JiggleAlgos.jiggleIterative(newSolution, s);
+		newSolution.jiggleAlgo = "iterative";
+		jiggledSolutions.add(newSolution);
 		
 		// return whichever "jiggle solution" has the highest score
-		return dumbJiggleSolution;
+		double bestScore = 0;
+		for (Solution solution : jiggledSolutions) {
+			double newScore = solution.getScore(s);
+			if (newScore > bestScore) {
+				bestScore = newScore;
+				bestSolution = solution;
+			}
+		}
+		
+		return bestSolution;
 	}
 	
 	private static ArrayList<Solution> generateAllPossibleSolutions(ArrayList<Location> trees, double width, double height, double s) {
