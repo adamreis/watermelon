@@ -5,7 +5,7 @@ import java.io.*;
 
 import watermelon.group1.Consts;
 import watermelon.group1.Location;
-import watermelon.group1.Vector2D;
+import watermelon.sim.Pair;
 
 public class PackAlgos {
 	public static enum Corner { UL, BL, UR, BR };
@@ -24,7 +24,7 @@ public class PackAlgos {
 		return false;
 	}
 	
-	public static ArrayList<Location> rectilinear(ArrayList<Location> trees, double width, double height, Corner corner) {
+	public static ArrayList<Location> rectilinear(ArrayList<Location> trees, double width, double height, Corner corner, Location treeToAvoid) {
 		double x, y, xStart, yStart;
 		int xSign, ySign;
 		
@@ -42,6 +42,11 @@ public class PackAlgos {
 		} else {
 			yStart = height - Consts.SEED_RADIUS;
 			ySign = -1;
+		}
+		
+		if (treeToAvoid != null) {
+			xStart = xStart == Consts.SEED_RADIUS ? xStart + treeToAvoid.x % 2 : xStart - treeToAvoid.x % 2;
+			yStart = yStart == Consts.SEED_RADIUS ? yStart + treeToAvoid.x % 2 : yStart - treeToAvoid.y % 2;
 		}
 				
 		ArrayList<Location> locations = new ArrayList<Location>();
@@ -65,7 +70,7 @@ public class PackAlgos {
 		return locations;
 	}
 	
-	public static ArrayList<Location> hexagonal(ArrayList<Location> trees, double width, double height, Corner corner, Direction direction) {
+	public static ArrayList<Location> hexagonal(ArrayList<Location> trees, double width, double height, Corner corner, Direction direction, Location treeToAvoid) {
 		double x, y, xStart, yStart;
 		int xSign, ySign;
 		boolean offset;
@@ -84,6 +89,11 @@ public class PackAlgos {
 		} else {
 			yStart = height - Consts.SEED_RADIUS;
 			ySign = -1;
+		}
+		
+		if (treeToAvoid != null) {
+			xStart = xStart == Consts.SEED_RADIUS ? xStart + treeToAvoid.x % 2 : xStart - treeToAvoid.x % 2;
+			yStart = yStart == Consts.SEED_RADIUS ? yStart + treeToAvoid.x % 2 : yStart - treeToAvoid.y % 2;
 		}
 				
 		ArrayList<Location> locations = new ArrayList<Location>();

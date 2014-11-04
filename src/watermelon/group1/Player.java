@@ -28,7 +28,7 @@ public class Player extends watermelon.sim.Player {
 		if (testMethod) {
 			possibleSolutions = new ArrayList<Solution>();
 			// choose a packing method
-			//Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V), trees, width, height);
+			// Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V), trees, width, height);
 			Solution solution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
 			ColoringAlgos.colorMaxValue(solution.seedNodes, new Location(width/2, height/2));
 			solution.coloringAlgo = "test";
@@ -122,70 +122,82 @@ public class Player extends watermelon.sim.Player {
 		Solution newSolution;
 		
 		// Rectilinear
-		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UL), trees, width, height);
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UL, null), trees, width, height);
 		newSolution.packingAlgo = "rectilinear, UL corner";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UR), trees, width, height);
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UR, null), trees, width, height);
 		newSolution.packingAlgo = "rectilinear, UR corner";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BL), trees, width, height);
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BL, null), trees, width, height);
 		newSolution.packingAlgo = "rectilinear, BL corner";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BR), trees, width, height);
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BR, null), trees, width, height);
 		newSolution.packingAlgo = "rectilinear, BR corner";
 		packings.add(newSolution);
+		
+		for (Location tree : trees) {
+			newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BR, tree), trees, width, height);
+			newSolution.packingAlgo = "rectilinear around tree at " + tree.x + ", " + tree.y;
+			packings.add(newSolution);
+		}
 		
 		System.err.println("Generated all Rectilinear packings");
 		
 		// Hex
-		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V), trees, width, height);
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V, null), trees, width, height);
 		newSolution.packingAlgo = "hex, UL corner, V direction";
 		packings.add(newSolution);
 
-		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.H), trees, width, height);
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.H, null), trees, width, height);
 		newSolution.packingAlgo = "hex, UL corner, H direction";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UR, PackAlgos.Direction.V), trees, width, height);
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UR, PackAlgos.Direction.V, null), trees, width, height);
 		newSolution.packingAlgo = "hex, UR corner, V direction";
 		packings.add(newSolution);
 
-		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UR, PackAlgos.Direction.H), trees, width, height);
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UR, PackAlgos.Direction.H, null), trees, width, height);
 		newSolution.packingAlgo = "hex, UR corner, H direction";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BL, PackAlgos.Direction.V), trees, width, height);
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BL, PackAlgos.Direction.V, null), trees, width, height);
 		newSolution.packingAlgo = "hex, BL corner, V direction";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BL, PackAlgos.Direction.H), trees, width, height);
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BL, PackAlgos.Direction.H, null), trees, width, height);
 		newSolution.packingAlgo = "hex, BL corner, H direction";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BR, PackAlgos.Direction.V), trees, width, height);
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BR, PackAlgos.Direction.V, null), trees, width, height);
 		newSolution.packingAlgo = "hex, BR corner, V direction";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BR, PackAlgos.Direction.H), trees, width, height);
+		newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BR, PackAlgos.Direction.H, null), trees, width, height);
 		newSolution.packingAlgo = "hex, BR corner, H direction";
 		packings.add(newSolution);
+		
+		for (Location tree : trees) {
+			newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BR, PackAlgos.Direction.H, tree), trees, width, height);
+			newSolution.packingAlgo = "hexagonal around tree at " + tree.x + ", " + tree.y;
+			packings.add(newSolution);
+		}
 		
 		System.err.println("Generated all Hex packings");
 		
 		// Best Known
-		newSolution = new Solution(PackAlgos.bestKnown(trees, width, height), trees, width, height);
-		newSolution.packingAlgo = "bestKnown";
-		packings.add(newSolution);
-
-		System.err.println("Generated Best Known packing");
+//		newSolution = new Solution(PackAlgos.bestKnown(trees, width, height), trees, width, height);
+//		newSolution.packingAlgo = "bestKnown";
+//		packings.add(newSolution);
+//
+//		System.err.println("Generated Best Known packing");
 		
-		// Physical
-		newSolution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
-		newSolution.packingAlgo = "physical";
-		packings.add(newSolution);
+//		// Physical
+//		newSolution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
+//		newSolution.packingAlgo = "physical";
+//		packings.add(newSolution);
 
 		System.err.println("Generated Physical packing");
 		

@@ -13,4 +13,8 @@ public class JiggleAlgos {
 		
 		return newSolution;
 	}
+	
+	public static void jiggleMultiple(Solution baseSolution) {
+		
+	}
 }
