@@ -51,24 +51,25 @@ public class Player extends watermelon.sim.Player {
 		System.err.println("Best score before jiggling is " + bestScore);
 		
 		// Now try jiggling it
-		jiggleSolution(bestSolution, s);
-		System.err.println("Best score after jiggling is " + bestSolution.getScore(s));
+		Solution jiggledSolution = jiggleSolution(bestSolution, s);
+		System.err.println("Best score after jiggling is " + jiggledSolution.getScore(s));
 		
 		// Print which configuration was best
 		System.out.println("Winning config:");
-		System.out.println("\tPacking: " + bestSolution.packingAlgo);
-		System.out.println("\tColoring: " + bestSolution.coloringAlgo);
-		System.out.println("\tJiggling: " + bestSolution.jiggleAlgo);
+		System.out.println("\tPacking: " + jiggledSolution.packingAlgo);
+		System.out.println("\tColoring: " + jiggledSolution.coloringAlgo);
+		System.out.println("\tJiggling: " + jiggledSolution.jiggleAlgo);
 		
 		double estimatedTime = System.nanoTime() - startTime;
 		System.out.println("Total time: " + estimatedTime/1000000000 + "s");
 		
 		// Transform our output into the simulator classes and return it
-		return bestSolution.simRepresentation();
+		return jiggledSolution.simRepresentation();
 	}
 	
 	private static Solution jiggleSolution(Solution baseSolution, double s) {
 		Solution newSolution;
+		baseSolution.jiggleAlgo = "none";
 		Solution bestSolution = baseSolution;
 		ArrayList<Solution> jiggledSolutions = new ArrayList<Solution>();
 		jiggledSolutions.add(baseSolution);
