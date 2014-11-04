@@ -11,8 +11,8 @@ public class PackAlgos {
 	public static enum Corner { UL, BL, UR, BR };
 	public static enum Direction { H, V };
 	
-	private static final int MAX_JIGGLES = 50;
-	private static final double MIN_JIGGLE_MOVE = 0.01;
+	private static final int MAX_JIGGLES = 500;
+	private static final double MIN_JIGGLE_MOVE = 0.001;
 	private static final double LOCATION_GRANULARITY = 0.25;
 	
 	private static boolean closeToTree(double x, double y, ArrayList<Location> trees) {
