@@ -47,6 +47,10 @@ public class Solution {
 		newSolution.coloringAlgo = this.coloringAlgo;
 		newSolution.jiggleAlgo = this.jiggleAlgo;
 		
+		newSolution.trees = this.trees;		// No need to deep duplicate since they aren't ever modified
+		newSolution.width = this.width;
+		newSolution.height = this.height;
+		
 		return newSolution;
 	}
 	
