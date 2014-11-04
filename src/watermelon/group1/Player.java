@@ -28,8 +28,7 @@ public class Player extends watermelon.sim.Player {
 		if (testMethod) {
 			possibleSolutions = new ArrayList<Solution>();
 			// choose a packing method
-			Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V), trees, width, height);
-			//Solution solution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
+			Solution solution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UL, false), trees, width, height);
 			ColoringAlgos.colorMaxValue(solution.seedNodes, new Location(width/2, height/2));
 			solution.coloringAlgo = "test";
 			solution.packingAlgo = "test";
@@ -136,20 +135,24 @@ public class Player extends watermelon.sim.Player {
 		Solution newSolution;
 		
 		// Rectilinear
-		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UL), trees, width, height);
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UL, false), trees, width, height);
 		newSolution.packingAlgo = "rectilinear, UL corner";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UR), trees, width, height);
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UR, false), trees, width, height);
 		newSolution.packingAlgo = "rectilinear, UR corner";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BL), trees, width, height);
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BL, false), trees, width, height);
 		newSolution.packingAlgo = "rectilinear, BL corner";
 		packings.add(newSolution);
 		
-		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BR), trees, width, height);
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BR, false), trees, width, height);
 		newSolution.packingAlgo = "rectilinear, BR corner";
+		packings.add(newSolution);
+		
+		newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.UL, true), trees, width, height);
+		newSolution.packingAlgo = "rectilinear, UL corner, spread out";
 		packings.add(newSolution);
 		
 		System.err.println("Generated all Rectilinear packings");

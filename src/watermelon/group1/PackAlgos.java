@@ -24,9 +24,23 @@ public class PackAlgos {
 		return false;
 	}
 	
-	public static ArrayList<Location> rectilinear(ArrayList<Location> trees, double width, double height, Corner corner) {
-		double x, y, xStart, yStart;
-		int xSign, ySign;
+	public static ArrayList<Location> rectilinear(ArrayList<Location> trees, double width, double height, Corner corner, boolean spreadApart) {
+		double x, y, xStart, yStart, extraX, extraY, xSpacing, ySpacing;
+		int xSign, ySign, numX, numY;
+		
+		if (spreadApart) {
+			numX = (int) Math.floor(width / (2 * Consts.SEED_RADIUS));
+			numY = (int) Math.floor(height / (2 * Consts.SEED_RADIUS));
+			
+			extraX = width - numX * 2 * Consts.SEED_RADIUS;
+			extraY = height - numY * 2 * Consts.SEED_RADIUS;
+			
+			xSpacing = extraX / (numX - 1);
+			ySpacing = extraY / (numY - 1);
+		} else {
+			xSpacing = 0;
+			ySpacing = 0;
+		}
 		
 		if (corner == Corner.UL || corner == Corner.BL) {
 			xStart = Consts.SEED_RADIUS;
@@ -56,10 +70,10 @@ public class PackAlgos {
 				if (!closeToTree(x, y, trees))
 					locations.add(new Location(x, y));
 				
-				x += 2*Consts.SEED_RADIUS * xSign;
+				x += (2*Consts.SEED_RADIUS + xSpacing) * xSign;
 			}
 			
-			y += 2*Consts.SEED_RADIUS * ySign;
+			y += (2*Consts.SEED_RADIUS + ySpacing)* ySign;
 		}
 		
 		return locations;
