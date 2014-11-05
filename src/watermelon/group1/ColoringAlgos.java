@@ -96,7 +96,7 @@ public class ColoringAlgos {
 		}
 	}
 	
-	private static boolean reColorIfNecessary(ArrayList<SeedNode> list) {
+	public static boolean reColorIfNecessary(ArrayList<SeedNode> list) {
 		boolean reColored = false;
 		for (SeedNode nodeToColor : list) {
 			double diploidInfluence = 0;

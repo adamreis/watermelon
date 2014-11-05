@@ -1,5 +1,7 @@
 package watermelon.group1;
 
+import java.util.ArrayList;
+
 import watermelon.group1.Solution;
 
 public class JiggleAlgos {

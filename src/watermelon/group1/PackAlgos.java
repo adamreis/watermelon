@@ -5,7 +5,7 @@ import java.io.*;
 
 import watermelon.group1.Consts;
 import watermelon.group1.Location;
-import watermelon.group1.Vector2D;
+import watermelon.sim.Pair;
 
 public class PackAlgos {
 	public static enum Corner { UL, BL, UR, BR };
@@ -23,8 +23,7 @@ public class PackAlgos {
 		
 		return false;
 	}
-	
-	public static ArrayList<Location> rectilinear(ArrayList<Location> trees, double width, double height, Corner corner, boolean spreadApart) {
+	public static ArrayList<Location> rectilinear(ArrayList<Location> trees, double width, double height, Corner corner, boolean spreadApart, Location treeToAvoid) {
 		double x, y, xStart, yStart, extraX, extraY, xSpacing, ySpacing;
 		int xSign, ySign, numX, numY;
 		
@@ -57,6 +56,13 @@ public class PackAlgos {
 			yStart = height - Consts.SEED_RADIUS;
 			ySign = -1;
 		}
+		
+		if (treeToAvoid != null) {
+			xStart = corner == Corner.UL || corner == Corner.BL ? 
+					xStart + (treeToAvoid.x + Consts.SEED_RADIUS) % 2*Consts.SEED_RADIUS : xStart - (treeToAvoid.x + Consts.SEED_RADIUS) % 2*Consts.SEED_RADIUS;
+			yStart = corner == Corner.UL || corner == Corner.UR ? 
+					yStart + (treeToAvoid.y + Consts.SEED_RADIUS) % 2*Consts.SEED_RADIUS : yStart - (treeToAvoid.y + Consts.SEED_RADIUS) % 2*Consts.SEED_RADIUS;
+		}
 				
 		ArrayList<Location> locations = new ArrayList<Location>();
 		
@@ -79,7 +85,7 @@ public class PackAlgos {
 		return locations;
 	}
 	
-	public static ArrayList<Location> hexagonal(ArrayList<Location> trees, double width, double height, Corner corner, Direction direction) {
+	public static ArrayList<Location> hexagonal(ArrayList<Location> trees, double width, double height, Corner corner, Direction direction, Location treeToAvoid) {
 		double x, y, xStart, yStart;
 		int xSign, ySign;
 		boolean offset;
@@ -99,7 +105,8 @@ public class PackAlgos {
 			yStart = height - Consts.SEED_RADIUS;
 			ySign = -1;
 		}
-				
+		
+		ArrayList<Location> treeIntersectors = new ArrayList<Location>();
 		ArrayList<Location> locations = new ArrayList<Location>();
 		
 		x = xStart;
@@ -113,6 +120,8 @@ public class PackAlgos {
 				while (x >= Consts.SEED_RADIUS && x <= width - Consts.SEED_RADIUS) {
 					if (!closeToTree(x, y, trees))
 						locations.add(new Location(x, y));
+					else
+						treeIntersectors.add(new Location(x, y));
 					
 					x += 2*Consts.SEED_RADIUS * xSign;
 				}
@@ -127,6 +136,8 @@ public class PackAlgos {
 				while (y >= Consts.SEED_RADIUS && y <= height - Consts.SEED_RADIUS) {
 					if (!closeToTree(x, y, trees))
 						locations.add(new Location(x, y));
+					else
+						treeIntersectors.add(new Location(x, y));
 					
 					y += 2*Consts.SEED_RADIUS * ySign;
 				}
@@ -134,6 +145,32 @@ public class PackAlgos {
 				x += Consts.SQRT_3*Consts.SEED_RADIUS * xSign;
 				offset = !offset;
 			}
+		}
+		if (treeToAvoid != null) {
+			ArrayList<Location> newLocations = new ArrayList<Location>();
+			double xOff = Double.MAX_VALUE;
+			double yOff = Double.MAX_VALUE;
+			for (Location loc : treeIntersectors) {
+				double newXOff = treeToAvoid.x - loc.x;
+				double newYOff = treeToAvoid.y - loc.y;
+				if (newXOff + newYOff < xOff + yOff) {
+					xOff = newXOff;
+					yOff = newYOff;
+				}
+			}
+			for (Location loc : locations) {
+				loc.x += xOff;
+				loc.y += yOff;
+				if (inBounds(loc, width, height))
+					newLocations.add(loc);
+			}
+			for (Location loc : treeIntersectors) {
+				loc.x += xOff;
+				loc.y += yOff;
+				if (!closeToTree(loc.x, loc.y, trees) && inBounds(loc, width, height))
+						newLocations.add(loc);
+			}
+			locations = newLocations;
 		}
 		
 		return locations;
@@ -372,5 +409,10 @@ public class PackAlgos {
 		locations = physicalWithExisting(trees, locations, width, height);
 		
 		return locations;
+	}
+	
+	private static boolean inBounds(Location loc, double width, double height) {
+		return loc.x >= Consts.SEED_RADIUS && loc.x <= width - Consts.SEED_RADIUS && 
+				loc.y >= Consts.SEED_RADIUS && loc.y <= height - Consts.SEED_RADIUS;
 	}
 }
