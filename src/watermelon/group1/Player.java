@@ -148,13 +148,6 @@ public class Player extends watermelon.sim.Player {
 			}
 		}
 		
-		for (Location tree : trees) {
-			newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, PackAlgos.Corner.BR, false, tree), trees, width, height);
-			newSolution.packingAlgo = "rectilinear around tree at " + tree.x + ", " + tree.y;
-			if (newSolution.seedNodes.size() > 0)
-				packings.add(newSolution);
-		}
-		
 		System.err.println("Generated all Rectilinear packings");
 		
 		// Hex
