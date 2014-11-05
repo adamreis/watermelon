@@ -11,18 +11,29 @@ public class PackAlgos {
 	public static enum Corner { UL, BL, UR, BR };
 	public static enum Direction { H, V };
 	
-	private static final int MAX_JIGGLES = 500;
-	private static final double MIN_JIGGLE_MOVE = 0.001;
-	private static final double LOCATION_GRANULARITY = 0.25;
+	private static final int MAX_PHYSICAL_ITERATIONS = 500;
+	private static final double MIN_PHYSICAL_MOVE = 0.001;
+	private static final double PHYSICAL_SEARCH_GRANULARITY = 0.25;
+	
+	private static boolean closeToTree(Location location, ArrayList<Location> trees) {
+		return Location.nearAny(location, trees, Consts.SEED_RADIUS + Consts.TREE_RADIUS - Consts.EPSILON);
+	}
 	
 	private static boolean closeToTree(double x, double y, ArrayList<Location> trees) {
-		for (Location tree : trees) {
-			if (Location.distance(x,  y, tree.x, tree.y) < (Consts.SEED_RADIUS + Consts.TREE_RADIUS - Consts.EPSILON))
-				return true;
-		}
-		
-		return false;
+		return closeToTree(new Location(x, y), trees);
 	}
+	
+	private static void pruneForTrees(ArrayList<Location> locations, ArrayList<Location> trees) {
+		int i;
+		Location location;
+		
+		for (i = locations.size() - 1; i >= 0; i--) {
+			location = locations.get(i);
+			if (closeToTree(location, trees))
+				locations.remove(i);
+		}
+	}
+	
 	public static ArrayList<Location> rectilinear(ArrayList<Location> trees, double width, double height, Corner corner, boolean spreadApart, Location treeToAvoid) {
 		double x, y, xStart, yStart, extraX, extraY, xSpacing, ySpacing;
 		int xSign, ySign, numX, numY;
@@ -161,13 +172,13 @@ public class PackAlgos {
 			for (Location loc : locations) {
 				loc.x += xOff;
 				loc.y += yOff;
-				if (inBounds(loc, width, height))
+				if (isInBounds(loc, width, height))
 					newLocations.add(loc);
 			}
 			for (Location loc : treeIntersectors) {
 				loc.x += xOff;
 				loc.y += yOff;
-				if (!closeToTree(loc.x, loc.y, trees) && inBounds(loc, width, height))
+				if (!closeToTree(loc.x, loc.y, trees) && isInBounds(loc, width, height))
 						newLocations.add(loc);
 			}
 			locations = newLocations;
@@ -176,7 +187,7 @@ public class PackAlgos {
 		return locations;
 	}
 	
-	private static boolean jiggleLocations(ArrayList<Location> locations, ArrayList<Location> trees, double width, double height) {
+	private static boolean simulateForces(ArrayList<Location> locations, ArrayList<Location> trees, double width, double height) {
 		// Set up the vectors that will move each location
 		ArrayList<Vector2D> vectors = new ArrayList<Vector2D>(locations.size());
 		for (int i = 0; i < locations.size(); i++)
@@ -190,22 +201,22 @@ public class PackAlgos {
 			
 			// Test against the walls
 			if (location.x < Consts.SEED_RADIUS)
-				vector.x += Math.max((Consts.SEED_RADIUS - location.x) / 2, Math.min(Consts.SEED_RADIUS - location.x, MIN_JIGGLE_MOVE));
+				vector.x += Math.max((Consts.SEED_RADIUS - location.x) / 2, Math.min(Consts.SEED_RADIUS - location.x, MIN_PHYSICAL_MOVE));
 			
 			if (location.y < Consts.SEED_RADIUS)
-				vector.y += Math.max((Consts.SEED_RADIUS - location.y) / 2, Math.min(Consts.SEED_RADIUS - location.y, MIN_JIGGLE_MOVE));
+				vector.y += Math.max((Consts.SEED_RADIUS - location.y) / 2, Math.min(Consts.SEED_RADIUS - location.y, MIN_PHYSICAL_MOVE));
 			
 			if (location.x > width - Consts.SEED_RADIUS)
-				vector.x -= Math.max((location.x - (width - Consts.SEED_RADIUS)) / 2, Math.min(location.x - (width - Consts.SEED_RADIUS), MIN_JIGGLE_MOVE));
+				vector.x -= Math.max((location.x - (width - Consts.SEED_RADIUS)) / 2, Math.min(location.x - (width - Consts.SEED_RADIUS), MIN_PHYSICAL_MOVE));
 			
 			if (location.y > height - Consts.SEED_RADIUS)
-				vector.y -= Math.max((location.y - (height - Consts.SEED_RADIUS)) / 2, Math.min(location.y - (height - Consts.SEED_RADIUS), MIN_JIGGLE_MOVE));
+				vector.y -= Math.max((location.y - (height - Consts.SEED_RADIUS)) / 2, Math.min(location.y - (height - Consts.SEED_RADIUS), MIN_PHYSICAL_MOVE));
 			
 			// Test against the trees
 			for (Location tree : trees) {
 				if ((d = Location.distance(location, tree)) < Consts.SEED_RADIUS + Consts.TREE_RADIUS) {
 					Vector2D v = new Vector2D();
-					double m = Math.max((Consts.SEED_RADIUS + Consts.TREE_RADIUS - d) / 2, Math.min(Consts.SEED_RADIUS + Consts.TREE_RADIUS - d, MIN_JIGGLE_MOVE));
+					double m = Math.max((Consts.SEED_RADIUS + Consts.TREE_RADIUS - d) / 2, Math.min(Consts.SEED_RADIUS + Consts.TREE_RADIUS - d, MIN_PHYSICAL_MOVE));
 					
 					v.x = Math.sqrt(Math.abs(location.x - tree.x)) * m * Math.signum(location.x - tree.x);
 					v.y = Math.sqrt(Math.abs(location.y - tree.y)) * m * Math.signum(location.y - tree.y);
@@ -220,7 +231,7 @@ public class PackAlgos {
 				
 				if (i != j && (d = Location.distance(location, testLocation)) < 2*Consts.SEED_RADIUS) {
 					Vector2D v = new Vector2D();
-					double m = Math.max((2*Consts.SEED_RADIUS - d) / 2, Math.min((2*Consts.SEED_RADIUS - d), MIN_JIGGLE_MOVE));
+					double m = Math.max((2*Consts.SEED_RADIUS - d) / 2, Math.min((2*Consts.SEED_RADIUS - d), MIN_PHYSICAL_MOVE));
 					
 					v.x = Math.sqrt(Math.abs(location.x - testLocation.x)) * m * Math.signum(location.x - testLocation.x);
 					v.y = Math.sqrt(Math.abs(location.y - testLocation.y)) * m * Math.signum(location.y - testLocation.y);
@@ -232,7 +243,7 @@ public class PackAlgos {
 		
 		boolean success = true;
 		
-		// Move each location by its vector and ensure its not a zero vector because it's balanced between trees
+		// Move each location by its vector and ensure it's not a zero vector because it's balanced between trees
 		for (int i = 0; i < locations.size(); i++) {
 			Vector2D v = vectors.get(i);
 			Location location = locations.get(i);
@@ -243,7 +254,7 @@ public class PackAlgos {
 				location.y += v.y;
 			}
 			
-			if (location.x < Consts.SEED_RADIUS - Consts.EPSILON || location.x > width - (Consts.SEED_RADIUS - Consts.EPSILON) || location.y < Consts.SEED_RADIUS - Consts.EPSILON || location.y > height - (Consts.SEED_RADIUS - Consts.EPSILON))
+			if (!isInBounds(location, width, height))
 				success = false;
 			
 			if (closeToTree(location.x, location.y, trees))
@@ -268,8 +279,8 @@ public class PackAlgos {
 			// Try various places to place a new seed on the field
 			boolean success = false;
 			
-			for (double x = Consts.SEED_RADIUS; x < width - Consts.SEED_RADIUS; x += LOCATION_GRANULARITY) {
-				for (double y = Consts.SEED_RADIUS; y < height - Consts.SEED_RADIUS; y += LOCATION_GRANULARITY) {
+			for (double x = Consts.SEED_RADIUS; x < width - Consts.SEED_RADIUS; x += PHYSICAL_SEARCH_GRANULARITY) {
+				for (double y = Consts.SEED_RADIUS; y < height - Consts.SEED_RADIUS; y += PHYSICAL_SEARCH_GRANULARITY) {
 					tryLocation = new Location(x, y);
 					boolean invalid = false;
 					
@@ -293,8 +304,8 @@ public class PackAlgos {
 					
 					tryLocations.add(tryLocation);
 					
-					for (int i = 0; i < MAX_JIGGLES; i++) {
-						success = jiggleLocations(tryLocations, trees, width, height);
+					for (int i = 0; i < MAX_PHYSICAL_ITERATIONS; i++) {
+						success = simulateForces(tryLocations, trees, width, height);
 						if (success) break;
 					}
 					
@@ -393,17 +404,13 @@ public class PackAlgos {
 		double scale = best[1];
 		
 		// Open the corresponding coordinates file and create the locations
-		ArrayList<Location> tentativeLocations = getBestKnownLocations(num, scale, dimension);
+		ArrayList<Location> locations = getBestKnownLocations(num, scale, dimension);
 		
-		if (tentativeLocations == null)
+		if (locations == null)
 			return null;
 		
 		// Remove tree intersections
-		ArrayList<Location> locations = new ArrayList<Location>();
-		for (Location tentativeLocation : tentativeLocations) {
-			if (!closeToTree(tentativeLocation.x, tentativeLocation.y, trees))
-				locations.add(tentativeLocation);
-		}
+		pruneForTrees(locations, trees);
 		
 		// Fill in the remaining space with a physical packing
 		locations = physicalWithExisting(trees, locations, width, height);
@@ -411,8 +418,7 @@ public class PackAlgos {
 		return locations;
 	}
 	
-	private static boolean inBounds(Location loc, double width, double height) {
-		return loc.x >= Consts.SEED_RADIUS && loc.x <= width - Consts.SEED_RADIUS && 
-				loc.y >= Consts.SEED_RADIUS && loc.y <= height - Consts.SEED_RADIUS;
+	private static boolean isInBounds(Location location, double width, double height) {
+		return !(location.x < Consts.SEED_RADIUS - Consts.EPSILON || location.x > width - (Consts.SEED_RADIUS - Consts.EPSILON) || location.y < Consts.SEED_RADIUS - Consts.EPSILON || location.y > height - (Consts.SEED_RADIUS - Consts.EPSILON));
 	}
 }
