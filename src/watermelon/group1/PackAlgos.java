@@ -161,7 +161,7 @@ public class PackAlgos {
 			for (Location loc : locations) {
 				loc.x += xOff;
 				loc.y += yOff;
-				if (inBounds(loc, width, height))
+				if (!closeToTree(loc.x, loc.y, trees) && inBounds(loc, width, height))
 					newLocations.add(loc);
 			}
 			for (Location loc : treeIntersectors) {
