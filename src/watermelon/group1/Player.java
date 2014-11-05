@@ -139,12 +139,14 @@ public class Player extends watermelon.sim.Player {
 		for (PackAlgos.Corner corner : PackAlgos.Corner.values()) {
 			newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, corner, false, null), trees, width, height);
 			newSolution.packingAlgo = "rectilinear, " + corner + " corner";
-			packings.add(newSolution);
+			if (newSolution.seedNodes.size() > 0)
+				packings.add(newSolution);
 			
 			for (Location tree : trees) {
 				newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, corner, false, tree), trees, width, height);
 				newSolution.packingAlgo = "rectilinear, " + corner + " corner around tree at " + tree.x + ", " + tree.y;
-				packings.add(newSolution);
+				if (newSolution.seedNodes.size() > 0)
+					packings.add(newSolution);
 			}
 		}
 		
@@ -155,7 +157,8 @@ public class Player extends watermelon.sim.Player {
 			for (PackAlgos.Direction dir : PackAlgos.Direction.values()) {
 				newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, corner, dir, null), trees, width, height);
 				newSolution.packingAlgo = "hex, " + corner + " corner, " + dir + " direction";
-				packings.add(newSolution);
+				if (newSolution.seedNodes.size() > 0)
+					packings.add(newSolution);
 				
 				for (Location tree : trees) {
 					newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, corner, dir, tree), trees, width, height);
@@ -173,7 +176,8 @@ public class Player extends watermelon.sim.Player {
 		if (packing != null) {
 			newSolution = new Solution(packing, trees, width, height);
 			newSolution.packingAlgo = "bestKnown";
-			packings.add(newSolution);
+			if (newSolution.seedNodes.size() > 0)
+				packings.add(newSolution);
 			System.err.println("Generated Best Known packing");
 		} else {
 			System.err.println("Failed to generate Best Known packing");
@@ -182,7 +186,8 @@ public class Player extends watermelon.sim.Player {
 		// Physical
 		newSolution = new Solution(PackAlgos.physical(trees, width, height), trees, width, height);
 		newSolution.packingAlgo = "physical";
-		packings.add(newSolution);
+		if (newSolution.seedNodes.size() > 0)
+			packings.add(newSolution);
 
 		System.err.println("Generated Physical packing");
 		
