@@ -31,13 +31,14 @@ public class JiggleAlgos {
 			seedNode.y = origLocation.y;
 			
 			double score;
-			Vector2D v = new Vector2D(Math.cos(Math.toRadians(angle)) * locationGranularity, Math.sin(Math.toRadians(angle)) * locationGranularity);
+			double x = Math.cos(Math.toRadians(angle)) * locationGranularity;
+			double y = Math.sin(Math.toRadians(angle)) * locationGranularity;
 			
 			while (true) {
-				seedNode.x += v.x;
-				seedNode.y += v.y;
+				seedNode.x += x;
+				seedNode.y += y;
 				
-				if (!solution.isValid())
+				if (!solution.isValidFor(seedNode))
 					break;
 				
 				score = solution.getScore(s);
