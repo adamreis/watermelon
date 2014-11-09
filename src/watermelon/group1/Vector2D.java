@@ -19,9 +19,22 @@ public class Vector2D {
     	this.y = v.y;
     }
     
-    public void add(Vector2D v) {
-    	this.x += v.x;
-    	this.y += v.y;
+    public Vector2D add(double x, double y) {
+    	this.x += x;
+    	this.y += y;
+    	
+    	return this;
+    }
+    
+    public Vector2D add(Vector2D v) {
+    	return add(v.x, v.y);
+    }
+    
+    public Vector2D negate() {
+    	x = -x;
+    	y = -y;
+    	
+    	return this;
     }
     
     public boolean isNone() {

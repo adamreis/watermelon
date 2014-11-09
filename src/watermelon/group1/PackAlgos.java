@@ -5,15 +5,14 @@ import java.io.*;
 
 import watermelon.group1.Consts;
 import watermelon.group1.Location;
-import watermelon.sim.Pair;
 
 public class PackAlgos {
 	public static enum Corner { UL, BL, UR, BR };
 	public static enum Direction { H, V };
 	
-	private static final int MAX_PHYSICAL_ITERATIONS = 50;
+	private static final int MAX_PHYSICAL_ITERATIONS = 1000;
 	private static final double MIN_PHYSICAL_MOVE = 0.01;
-	private static final double PHYSICAL_SEARCH_GRANULARITY = 0.25;
+	private static final double PHYSICAL_SEARCH_GRANULARITY = (2 * Consts.SQRT_3) / (2 + Consts.SQRT_3);
 	private static final int MAX_PHYSICAL_FAILURES_PER_LOCATION = 3;
 	
 	private static boolean closeToTree(Location location, ArrayList<Location> trees) {
@@ -217,28 +216,25 @@ public class PackAlgos {
 			// Test against the trees
 			for (Location tree : trees) {
 				if ((d = Location.distance(location, tree)) < Consts.SEED_RADIUS + Consts.TREE_RADIUS) {
-					Vector2D v = new Vector2D();
 					double m = Math.max((Consts.SEED_RADIUS + Consts.TREE_RADIUS - d) / 2, Math.min(Consts.SEED_RADIUS + Consts.TREE_RADIUS - d, MIN_PHYSICAL_MOVE));
 					
-					v.x = Math.sqrt(Math.abs(location.x - tree.x)) * m * Math.signum(location.x - tree.x);
-					v.y = Math.sqrt(Math.abs(location.y - tree.y)) * m * Math.signum(location.y - tree.y);
-					
-					vector.add(v);
+					vector.x += Math.sqrt(Math.abs(location.x - tree.x)) * m * Math.signum(location.x - tree.x);
+					vector.y += Math.sqrt(Math.abs(location.y - tree.y)) * m * Math.signum(location.y - tree.y);
 				}
 			}
 			
 			// Test against the other locations
-			for (int j = 0; j < locations.size(); j++) {
+			for (int j = i + 1; j < locations.size(); j++) {
 				Location testLocation = locations.get(j);
 				
-				if (i != j && (d = Location.distance(location, testLocation)) < 2*Consts.SEED_RADIUS) {
-					Vector2D v = new Vector2D();
+				if ((d = Location.distance(location, testLocation)) < 2*Consts.SEED_RADIUS) {
 					double m = Math.max((2*Consts.SEED_RADIUS - d) / 2, Math.min((2*Consts.SEED_RADIUS - d), MIN_PHYSICAL_MOVE));
 					
-					v.x = Math.sqrt(Math.abs(location.x - testLocation.x)) * m * Math.signum(location.x - testLocation.x);
-					v.y = Math.sqrt(Math.abs(location.y - testLocation.y)) * m * Math.signum(location.y - testLocation.y);
+					double x = Math.sqrt(Math.abs(location.x - testLocation.x)) * m * Math.signum(location.x - testLocation.x);
+					double y = Math.sqrt(Math.abs(location.y - testLocation.y)) * m * Math.signum(location.y - testLocation.y);
 					
-					vector.add(v);
+					vector.add(x, y);
+					vectors.get(j).add(-x, -y);
 				}
 			}
 		}
@@ -289,6 +285,18 @@ public class PackAlgos {
 		for (double x = Consts.SEED_RADIUS; x <= width - Consts.SEED_RADIUS; x += PHYSICAL_SEARCH_GRANULARITY) {
 			for (double y = Consts.SEED_RADIUS; y <= height - Consts.SEED_RADIUS; y += PHYSICAL_SEARCH_GRANULARITY) {
 				Location l = new Location(x, y);
+				boolean isValid = true;
+						
+				for (Location tree : trees) {
+					if (Location.equals(l, tree)) {
+						isValid = false;
+						break;
+					}
+				}
+				
+				if (!isValid)
+					continue;
+					
 				locationsToTry.add(l);
 				numFailures.put(l.toString(), 0);
 			}
@@ -298,20 +306,14 @@ public class PackAlgos {
 			// Try various places to place a new seed on the field.  We shuffle the locations to avoid repeatedly running likely fruitless simulations in each iteration
 			Collections.shuffle(locationsToTry);
 			boolean success = false;
-			int numTries = 0;
 			
-			for (Location l : locationsToTry) {
-				numTries++;
-				locationToTry = new Location(l);
+			for (Location locationToTryOrig : locationsToTry) {
+				locationToTry = new Location(locationToTryOrig);
 								
 				if (numFailures.get(locationToTry.toString()) >= MAX_PHYSICAL_FAILURES_PER_LOCATION)
 					continue;
 				
 				boolean isValid = true;
-				
-				for (Location tree : trees)
-					if (Location.equals(locationToTry, tree))
-						isValid = false;
 				
 				for (Location location : locationsPacked)
 					if (Location.equals(locationToTry, location))
@@ -326,7 +328,6 @@ public class PackAlgos {
 					locationsToSimulate.add(new Location(location));
 				
 				locationsToSimulate.add(locationToTry);
-				Location locationToTryOrig = new Location(locationToTry);
 				
 				for (int i = 0; i < MAX_PHYSICAL_ITERATIONS; i++) {
 					success = simulateForces(locationsToSimulate, vectors, trees, width, height);
