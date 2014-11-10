@@ -21,7 +21,7 @@ public class Player extends watermelon.sim.Player {
 		for (Pair p : treelist)
 			trees.add(new Location(p.x, p.y));
 		
-		boolean testMethod = false;
+		boolean testMethod = true;
 		ArrayList<Solution> possibleSolutions;
 		
 		// use this variable for testing a particular method
@@ -29,6 +29,8 @@ public class Player extends watermelon.sim.Player {
 			possibleSolutions = new ArrayList<Solution>();
 			// choose a packing method
 			Solution solution = new Solution(PackAlgos.hexagonalSpread(trees, width, height, PackAlgos.Direction.V), trees, width, height);
+//			Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.UL, PackAlgos.Direction.V, null), trees, width, height);
+			
 			ColoringAlgos.colorMaxValue(solution.seedNodes, new Location(width/2, height/2));
 			solution.coloringAlgo = "test";
 			solution.packingAlgo = "test";
@@ -77,6 +79,11 @@ public class Player extends watermelon.sim.Player {
 		newSolution = baseSolution.deepDuplicate();
 		JiggleAlgos.jiggleIterative(newSolution, s);
 		newSolution.jiggleAlgo = "iterative";
+		jiggledSolutions.add(newSolution);
+		
+		newSolution = baseSolution.deepDuplicate();
+		JiggleAlgos.jiggleAllTogether(newSolution, s);
+		newSolution.jiggleAlgo = "all together";
 		jiggledSolutions.add(newSolution);
 		
 		// return whichever "jiggle solution" has the highest score
