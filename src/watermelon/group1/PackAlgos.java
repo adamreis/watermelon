@@ -96,6 +96,71 @@ public class PackAlgos {
 		return locations;
 	}
 	
+	public static ArrayList<Location> hexagonalSpread(ArrayList<Location> trees, double width, double height, Direction direction) {
+		double x, y, xStart, yStart, extraX, extraY, xSpacing, ySpacing;
+		int numX, numY;
+		boolean offset;
+		
+		xStart = Consts.SEED_RADIUS;
+		yStart = Consts.SEED_RADIUS;
+		
+		ArrayList<Location> treeIntersectors = new ArrayList<Location>();
+		ArrayList<Location> locations = new ArrayList<Location>();
+		
+		x = xStart;
+		y = yStart;
+		offset = false;
+		
+		if (direction == Direction.H) {
+			numY = (int) Math.floor(height / (Consts.SQRT_3 * Consts.SEED_RADIUS));
+			
+			extraY = height - numY * 1.02 * Consts.SQRT_3 * Consts.SEED_RADIUS;
+			
+			ySpacing = extraY / (numY - 1);
+
+			while (y >= Consts.SEED_RADIUS && y <= height - Consts.SEED_RADIUS) {
+				x = xStart + (offset ? Consts.SEED_RADIUS : 0);
+				
+				while (x >= Consts.SEED_RADIUS && x <= width - Consts.SEED_RADIUS) {
+					if (!closeToTree(x, y, trees))
+						locations.add(new Location(x, y));
+					else
+						treeIntersectors.add(new Location(x, y));
+					
+					x += 2*Consts.SEED_RADIUS;
+				}
+				
+				y += Consts.SQRT_3*Consts.SEED_RADIUS + ySpacing;
+				offset = !offset;
+			}
+		} else {
+			numX = (int) Math.floor(width / (Consts.SQRT_3 * Consts.SEED_RADIUS));
+			
+			extraX = width - numX * 1.02 * Consts.SQRT_3 * Consts.SEED_RADIUS;
+		
+			xSpacing = extraX / (numX - 1);
+			
+			
+			while (x >= Consts.SEED_RADIUS && x <= width - Consts.SEED_RADIUS) {
+				y = yStart + (offset ? Consts.SEED_RADIUS: 0);
+				
+				while (y >= Consts.SEED_RADIUS && y <= height - Consts.SEED_RADIUS) {
+					if (!closeToTree(x, y, trees))
+						locations.add(new Location(x, y));
+					else
+						treeIntersectors.add(new Location(x, y));
+					
+					y += 2*Consts.SEED_RADIUS;
+				}
+				
+				x += Consts.SQRT_3*Consts.SEED_RADIUS + xSpacing;
+				offset = !offset;
+			}
+		}
+		
+		return locations;
+	}
+	
 	public static ArrayList<Location> hexagonal(ArrayList<Location> trees, double width, double height, Corner corner, Direction direction, Location treeToAvoid) {
 		double x, y, xStart, yStart;
 		int xSign, ySign;

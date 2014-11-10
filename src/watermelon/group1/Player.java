@@ -28,7 +28,7 @@ public class Player extends watermelon.sim.Player {
 		if (testMethod) {
 			possibleSolutions = new ArrayList<Solution>();
 			// choose a packing method
-			Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BR, PackAlgos.Direction.H, trees.get(0)), trees, width, height);
+			Solution solution = new Solution(PackAlgos.hexagonalSpread(trees, width, height, PackAlgos.Direction.V), trees, width, height);
 			ColoringAlgos.colorMaxValue(solution.seedNodes, new Location(width/2, height/2));
 			solution.coloringAlgo = "test";
 			solution.packingAlgo = "test";
@@ -153,8 +153,8 @@ public class Player extends watermelon.sim.Player {
 		System.err.println("Generated all Rectilinear packings");
 		
 		// Hex
-		for (PackAlgos.Corner corner : PackAlgos.Corner.values()) {
-			for (PackAlgos.Direction dir : PackAlgos.Direction.values()) {
+		for (PackAlgos.Direction dir : PackAlgos.Direction.values()) {
+			for (PackAlgos.Corner corner : PackAlgos.Corner.values()) {
 				newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, corner, dir, null), trees, width, height);
 				newSolution.packingAlgo = "hex, " + corner + " corner, " + dir + " direction";
 				if (newSolution.seedNodes.size() > 0)
@@ -167,6 +167,8 @@ public class Player extends watermelon.sim.Player {
 						packings.add(newSolution);
 				}
 			}
+			newSolution = new Solution(PackAlgos.hexagonalSpread(trees, width, height, dir), trees, width, height);
+			newSolution.packingAlgo = "hex, spread " + dir;
 		}
 		
 		System.err.println("Generated all Hex packings");
