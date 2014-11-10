@@ -5,15 +5,15 @@ import java.io.*;
 
 import watermelon.group1.Consts;
 import watermelon.group1.Location;
-import watermelon.sim.Pair;
 
 public class PackAlgos {
 	public static enum Corner { UL, BL, UR, BR };
 	public static enum Direction { H, V };
 	
-	private static final int MAX_PHYSICAL_ITERATIONS = 500;
-	private static final double MIN_PHYSICAL_MOVE = 0.001;
-	private static final double PHYSICAL_SEARCH_GRANULARITY = 0.25;
+	private static final int MAX_PHYSICAL_ITERATIONS = 1000;
+	private static final double MIN_PHYSICAL_MOVE = 0.01;
+	private static final double PHYSICAL_SEARCH_GRANULARITY = (2 * Consts.SQRT_3) / (2 + Consts.SQRT_3);
+	private static final int MAX_PHYSICAL_FAILURES_PER_LOCATION = 3;
 	
 	private static boolean closeToTree(Location location, ArrayList<Location> trees) {
 		return Location.nearAny(location, trees, Consts.SEED_RADIUS + Consts.TREE_RADIUS - Consts.EPSILON);
@@ -188,11 +188,11 @@ public class PackAlgos {
 		return locations;
 	}
 	
-	private static boolean simulateForces(ArrayList<Location> locations, ArrayList<Location> trees, double width, double height) {
-		// Set up the vectors that will move each location
-		ArrayList<Vector2D> vectors = new ArrayList<Vector2D>(locations.size());
-		for (int i = 0; i < locations.size(); i++)
-			vectors.add(new Vector2D());
+	private static boolean simulateForces(ArrayList<Location> locations, ArrayList<Vector2D> vectors, ArrayList<Location> trees, double width, double height) {
+		for (Vector2D vector : vectors) {
+			vector.x = 0;
+			vector.y = 0;
+		}
 		
 		// For each location, calculate its vector
 		for (int i = 0; i < locations.size(); i++) {
@@ -216,28 +216,25 @@ public class PackAlgos {
 			// Test against the trees
 			for (Location tree : trees) {
 				if ((d = Location.distance(location, tree)) < Consts.SEED_RADIUS + Consts.TREE_RADIUS) {
-					Vector2D v = new Vector2D();
 					double m = Math.max((Consts.SEED_RADIUS + Consts.TREE_RADIUS - d) / 2, Math.min(Consts.SEED_RADIUS + Consts.TREE_RADIUS - d, MIN_PHYSICAL_MOVE));
 					
-					v.x = Math.sqrt(Math.abs(location.x - tree.x)) * m * Math.signum(location.x - tree.x);
-					v.y = Math.sqrt(Math.abs(location.y - tree.y)) * m * Math.signum(location.y - tree.y);
-					
-					vector.add(v);
+					vector.x += Math.sqrt(Math.abs(location.x - tree.x)) * m * Math.signum(location.x - tree.x);
+					vector.y += Math.sqrt(Math.abs(location.y - tree.y)) * m * Math.signum(location.y - tree.y);
 				}
 			}
 			
 			// Test against the other locations
-			for (int j = 0; j < locations.size(); j++) {
+			for (int j = i + 1; j < locations.size(); j++) {
 				Location testLocation = locations.get(j);
 				
-				if (i != j && (d = Location.distance(location, testLocation)) < 2*Consts.SEED_RADIUS) {
-					Vector2D v = new Vector2D();
+				if ((d = Location.distance(location, testLocation)) < 2*Consts.SEED_RADIUS) {
 					double m = Math.max((2*Consts.SEED_RADIUS - d) / 2, Math.min((2*Consts.SEED_RADIUS - d), MIN_PHYSICAL_MOVE));
 					
-					v.x = Math.sqrt(Math.abs(location.x - testLocation.x)) * m * Math.signum(location.x - testLocation.x);
-					v.y = Math.sqrt(Math.abs(location.y - testLocation.y)) * m * Math.signum(location.y - testLocation.y);
+					double x = Math.sqrt(Math.abs(location.x - testLocation.x)) * m * Math.signum(location.x - testLocation.x);
+					double y = Math.sqrt(Math.abs(location.y - testLocation.y)) * m * Math.signum(location.y - testLocation.y);
 					
-					vector.add(v);
+					vector.add(x, y);
+					vectors.get(j).add(-x, -y);
 				}
 			}
 		}
@@ -258,7 +255,7 @@ public class PackAlgos {
 			if (!isInBounds(location, width, height))
 				success = false;
 			
-			if (closeToTree(location.x, location.y, trees))
+			if (closeToTree(location, trees))
 				success = false;
 		}
 		
@@ -266,51 +263,80 @@ public class PackAlgos {
 	}
 	
 	private static ArrayList<Location> physicalWithExisting(ArrayList<Location> trees, ArrayList<Location> existingLocations, double width, double height) {
-		ArrayList<Location> locations = new ArrayList<Location>();
+		ArrayList<Location> locationsPacked = new ArrayList<Location>();			// Final locations to return
+		ArrayList<Location> locationsToTry = new ArrayList<Location>();				// List of locations to try for the simulation; the front of the list has higher priority locations to try than the end of the list
+		ArrayList<Location> locationsToSimulate = null;								// The current set of locations being simulated; locations will be set to this if the simulation succeeds in finding a valid field
+		Location locationToTry = null;
+		HashMap<String, Integer> numFailures = new HashMap<String, Integer>();		// Stores the number of times the simulation has failed for a particular location, so that we can avoid repeating those failures
+		
+		// Loose upper bound on the maximum number of seeds
+		int maxSeeds = (int) (width * height / (Math.PI * Math.pow(Consts.SEED_RADIUS, 2)));
+		
+		// We set up the vector list now to avoid expensive object creation and garbage collection during each simulation
+		ArrayList<Vector2D> vectors = new ArrayList<Vector2D>(maxSeeds);
+		for (int i = 0; i < maxSeeds; i++)
+			vectors.add(new Vector2D());
 		
 		if (existingLocations != null) {
-			for (Location location : existingLocations)
-				locations.add(location);
+			for (Location l : existingLocations)
+				locationsPacked.add(l);
 		}
 		
-		Location tryLocation = null;
-		ArrayList<Location> tryLocations = null;
+		for (double x = Consts.SEED_RADIUS; x <= width - Consts.SEED_RADIUS; x += PHYSICAL_SEARCH_GRANULARITY) {
+			for (double y = Consts.SEED_RADIUS; y <= height - Consts.SEED_RADIUS; y += PHYSICAL_SEARCH_GRANULARITY) {
+				Location l = new Location(x, y);
+				boolean isValid = true;
+						
+				for (Location tree : trees) {
+					if (Location.equals(l, tree)) {
+						isValid = false;
+						break;
+					}
+				}
+				
+				if (!isValid)
+					continue;
+					
+				locationsToTry.add(l);
+				numFailures.put(l.toString(), 0);
+			}
+		}
 		
 		while (true) {
-			// Try various places to place a new seed on the field
+			// Try various places to place a new seed on the field.  We shuffle the locations to avoid repeatedly running likely fruitless simulations in each iteration
+			Collections.shuffle(locationsToTry);
 			boolean success = false;
 			
-			for (double x = Consts.SEED_RADIUS; x < width - Consts.SEED_RADIUS; x += PHYSICAL_SEARCH_GRANULARITY) {
-				for (double y = Consts.SEED_RADIUS; y < height - Consts.SEED_RADIUS; y += PHYSICAL_SEARCH_GRANULARITY) {
-					tryLocation = new Location(x, y);
-					boolean invalid = false;
-					
-					for (Location tree : trees) {
-						if (Location.distance(tryLocation, tree) < (Consts.SEED_RADIUS + Consts.TREE_RADIUS) / 2)
-							invalid = true;
+			for (Location locationToTryOrig : locationsToTry) {
+				locationToTry = new Location(locationToTryOrig);
+								
+				if (numFailures.get(locationToTry.toString()) >= MAX_PHYSICAL_FAILURES_PER_LOCATION)
+					continue;
+				
+				boolean isValid = true;
+				
+				for (Location location : locationsPacked)
+					if (Location.equals(locationToTry, location))
+						isValid = false;
+								
+				if (!isValid)
+					continue;
+				
+				// Deep copy the existing best locations and add the new one to try
+				locationsToSimulate = new ArrayList<Location>();
+				for (Location location : locationsPacked)
+					locationsToSimulate.add(new Location(location));
+				
+				locationsToSimulate.add(locationToTry);
+				
+				for (int i = 0; i < MAX_PHYSICAL_ITERATIONS; i++) {
+					success = simulateForces(locationsToSimulate, vectors, trees, width, height);
+					if (success) {
+						numFailures.put(locationToTryOrig.toString(), 0);
+						break;
+					} else {
+						numFailures.put(locationToTryOrig.toString(), numFailures.get(locationToTryOrig.toString()) + 1);
 					}
-					
-					for (Location location : locations) {
-						if (Location.distance(tryLocation, location) < Consts.SEED_RADIUS)
-							invalid = true;
-					}
-					
-					// Do not try this location if it exactly overlaps an existing one (or is fairly close)
-					if (invalid) continue;
-					
-					// Deep copy the existing best locations and add the new one to try
-					tryLocations = new ArrayList<Location>();
-					for (Location location : locations)
-						tryLocations.add(new Location(location));
-					
-					tryLocations.add(tryLocation);
-					
-					for (int i = 0; i < MAX_PHYSICAL_ITERATIONS; i++) {
-						success = simulateForces(tryLocations, trees, width, height);
-						if (success) break;
-					}
-					
-					if (success) break;
 				}
 				
 				if (success) break;
@@ -318,10 +344,10 @@ public class PackAlgos {
 			
 			if (!success) break;
 			
-			locations = tryLocations;
+			locationsPacked = locationsToSimulate;
 		}
 		
-		return locations;
+		return locationsPacked;
 	}
 	
 	public static ArrayList<Location> physical(ArrayList<Location> trees, double width, double height) {

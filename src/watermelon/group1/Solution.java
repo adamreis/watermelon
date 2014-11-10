@@ -91,21 +91,28 @@ public class Solution {
 	
 	public boolean isValid() {
 		for (SeedNode node : seedNodes) {
-			if (node.x < Consts.SEED_RADIUS - Consts.EPSILON || node.x > width - (Consts.SEED_RADIUS - Consts.EPSILON) || node.y < Consts.SEED_RADIUS - Consts.EPSILON || node.y > height - (Consts.SEED_RADIUS - Consts.EPSILON))
+			if (!isValidFor(node))
 				return false;
-			
-			for (Location tree : trees) {
-				if (Location.distance(node, tree) < Consts.SEED_RADIUS + Consts.TREE_RADIUS - Consts.EPSILON)
-					return false;
-			}
-			
-			for (SeedNode otherNode : seedNodes) {
-				if (otherNode != node && Location.distance(node, otherNode) < 2*Consts.SEED_RADIUS - Consts.EPSILON)
-					return false;
-			}
 		}
 		
 		return true;
+	}
+	
+	public boolean isValidFor(SeedNode node) {
+		if (node.x < Consts.SEED_RADIUS - Consts.EPSILON || node.x > width - (Consts.SEED_RADIUS - Consts.EPSILON) || node.y < Consts.SEED_RADIUS - Consts.EPSILON || node.y > height - (Consts.SEED_RADIUS - Consts.EPSILON))
+			return false;
+		
+		for (Location tree : trees) {
+			if (Location.distance(node, tree) < Consts.SEED_RADIUS + Consts.TREE_RADIUS - Consts.EPSILON)
+				return false;
+		}
+		
+		for (SeedNode otherNode : seedNodes) {
+			if (otherNode != node && Location.distance(node, otherNode) < 2*Consts.SEED_RADIUS - Consts.EPSILON)
+				return false;
+		}
+			
+		return true;		
 	}
 	
 	public double getScore(double scoringMultiplier) {

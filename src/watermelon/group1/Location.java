@@ -16,6 +16,24 @@ public class Location {
     	this.y = location.y;
     }
     
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+
+        if (!(o instanceof Location))
+            return false;
+         
+        Location l = (Location) o;
+             	
+    	return x == l.x && y == l.y;
+    }
+    
+    @Override
+    public String toString() {
+    	return "(" + Double.toString(x) + " " + Double.toString(y) + ")";
+    }
+    
     static public double distanceSquared(double x1, double y1, double x2, double y2) {
     	return (x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2);
     }
