@@ -157,13 +157,13 @@ public class Player extends watermelon.sim.Player {
 			for (PackAlgos.Direction dir : PackAlgos.Direction.values()) {
 				for (int i = 0; i < 2; i++) {
 					newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, corner, dir, i == 0, null), trees, width, height);
-					newSolution.packingAlgo = "hex, " + corner + " corner, " + dir + " direction";
+					newSolution.packingAlgo = "hex, " + corner + " corner, " + dir + " direction" + (i == 0 ? " with spread" : "");
 					if (newSolution.seedNodes.size() > 0)
 						packings.add(newSolution);
 					
 					for (Location tree : trees) {
 						newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, corner, dir, i == 0, tree), trees, width, height);
-						newSolution.packingAlgo = "hexagonal around tree at " + tree.x + ", " + tree.y  + ", " + corner + " corner, " + dir + " direction";
+						newSolution.packingAlgo = "hexagonal around tree at " + tree.x + ", " + tree.y  + ", " + corner + " corner, " + dir + " direction" + (i == 0 ? " with spread" : "");;
 						if (newSolution.seedNodes.size() > 0)
 							packings.add(newSolution);
 					}
