@@ -96,7 +96,7 @@ public class PackAlgos {
 		return locations;
 	}
 	
-	public static ArrayList<Location> hexagonal(ArrayList<Location> trees, double width, double height, Corner corner, Direction direction, Location treeToAvoid) {
+	public static ArrayList<Location> hexagonal(ArrayList<Location> trees, double width, double height, Corner corner, Direction direction, boolean spreadApart, Location treeToAvoid) {
 		double x, y, xStart, yStart;
 		int xSign, ySign;
 		boolean offset;
@@ -120,6 +120,23 @@ public class PackAlgos {
 		ArrayList<Location> treeIntersectors = new ArrayList<Location>();
 		ArrayList<Location> locations = new ArrayList<Location>();
 		
+		// numLines is the number of rows/columns that we have along the given direction.  If direction is horizontal, it means the seeds are side by side horizontally, and the number of rows relates to the height of the field.  It is analogous if the direction is vertical
+		int numLines;
+		if (direction == Direction.H)
+			numLines = (int) Math.floor((height - 2*Consts.SEED_RADIUS) / (Consts.SQRT_3*Consts.SEED_RADIUS)) + (height - 2*Consts.SEED_RADIUS > 0 ? 1 : 0);
+		else
+			numLines = (int) Math.floor((width - 2*Consts.SEED_RADIUS) / (Consts.SQRT_3*Consts.SEED_RADIUS)) + (width - 2*Consts.SEED_RADIUS > 0 ? 1 : 0);
+		
+		// With the number of lines, if spreading is on, we can calculate the additional offset needed on that dimension to spread
+		double spreadAmount = Consts.SQRT_3*Consts.SEED_RADIUS;
+		
+		if (spreadApart) {
+			if (direction == Direction.H)
+				spreadAmount += (height - (2*Consts.SEED_RADIUS + (numLines - 1)*spreadAmount)) / (numLines - 1) - Consts.EPSILON;
+			else
+				spreadAmount += (width - (2*Consts.SEED_RADIUS + (numLines - 1)*spreadAmount)) / (numLines - 1) - Consts.EPSILON;
+		}
+		
 		x = xStart;
 		y = yStart;
 		offset = false;
@@ -137,7 +154,7 @@ public class PackAlgos {
 					x += 2*Consts.SEED_RADIUS * xSign;
 				}
 				
-				y += Consts.SQRT_3*Consts.SEED_RADIUS * ySign;
+				y += spreadAmount * ySign;
 				offset = !offset;
 			}
 		} else {
@@ -153,7 +170,7 @@ public class PackAlgos {
 					y += 2*Consts.SEED_RADIUS * ySign;
 				}
 				
-				x += Consts.SQRT_3*Consts.SEED_RADIUS * xSign;
+				x += spreadAmount * xSign;
 				offset = !offset;
 			}
 		}
