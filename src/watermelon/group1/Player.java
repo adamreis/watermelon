@@ -15,58 +15,94 @@ public class Player extends watermelon.sim.Player {
 	public ArrayList<seed> move(ArrayList<Pair> treelist, double width, double height, double s) {
 		long startTime = System.currentTimeMillis();
 		long timeLimit = startTime + 60 * 60 * 1000;
+		long lastIterationLength = 0;
+		
+		int maxIterations = 10;
+		int numIterations = 0;
+		Solution bestIteration = null;
+		int bestIterationNum = 0;
 		
 		// Transform input parameters from simulator classes into our preferred class
 		ArrayList<Location> trees = new ArrayList<Location>();
 		for (Pair p : treelist)
 			trees.add(new Location(p.x, p.y));
-		
-		boolean testMethod = false;
-		ArrayList<Solution> possibleSolutions;
-		
-		// use this variable for testing a particular method
-		if (testMethod) {
-			possibleSolutions = new ArrayList<Solution>();
-			// choose a packing method
-			Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BR, PackAlgos.Direction.V, true, null), trees, width, height);
-			ColoringAlgos.colorMaxValue(solution.seedNodes, new Location(width/2, height/2));
-			solution.coloringAlgo = "test";
-			solution.packingAlgo = "test";
-			possibleSolutions.add(solution);
-		} else {
-			// Get all possible packings/colorings
-			possibleSolutions = generateAllPossibleSolutions(trees, width, height, s);
-		}
-		
-		// Now find the best one
-		Solution bestSolution = new Solution();
-		double bestScore = 0;
-		for (Solution solution : possibleSolutions) {
-			double newScore = solution.getScore(s);
-			if (newScore > bestScore) {
-				bestScore = newScore;
-				bestSolution = solution;
+
+		while (numIterations < maxIterations && timeLimit - System.currentTimeMillis() > lastIterationLength) {
+			System.out.printf("Iteration #%d\n", numIterations);
+			System.out.printf("-------------\n");
+			
+			long iterationStartTime = System.currentTimeMillis();
+						
+			boolean testMethod = false;
+			ArrayList<Solution> possibleSolutions;
+			
+			// use this variable for testing a particular method
+			if (testMethod) {
+				possibleSolutions = new ArrayList<Solution>();
+				// choose a packing method
+				Solution solution = new Solution(PackAlgos.hexagonal(trees, width, height, PackAlgos.Corner.BR, PackAlgos.Direction.V, true, null), trees, width, height);
+				ColoringAlgos.colorMaxValue(solution.seedNodes, new Location(width/2, height/2));
+				solution.coloringAlgo = "test";
+				solution.packingAlgo = "test";
+				possibleSolutions.add(solution);
+			} else {
+				// Get all possible packings/colorings
+				possibleSolutions = generateAllPossibleSolutions(trees, width, height, s);
 			}
+			
+			// Now find the best one
+			Solution bestSolution = new Solution();
+			double bestScore = 0;
+			for (Solution solution : possibleSolutions) {
+				double newScore = solution.getScore(s);
+				if (newScore > bestScore) {
+					bestScore = newScore;
+					bestSolution = solution;
+				}
+			}
+			System.out.println("Best score before jiggling is " + bestScore);
+			
+			// Now try jiggling it
+			Solution jiggledSolution = jiggleSolution(bestSolution, s, timeLimit);
+			System.out.println("Best score after jiggling is " + jiggledSolution.getScore(s));
+			
+			// Print which configuration was best
+			System.out.println("Best config in this iteration:");
+			System.out.println("\tPacking: " + jiggledSolution.packingAlgo);
+			System.out.println("\tColoring: " + jiggledSolution.coloringAlgo);
+			System.out.println("\tJiggling: " + jiggledSolution.jiggleAlgo);
+			
+			long currentTime = System.currentTimeMillis();
+			lastIterationLength = currentTime - iterationStartTime;
+			System.out.println("Total iteration time: " + (lastIterationLength)/1000 + "s");
+			
+			if (bestIteration == null || jiggledSolution.getScore(s) > bestIteration.getScore(s)) {
+				bestIteration = jiggledSolution;
+				bestIterationNum = numIterations;
+				System.out.printf("Iteration %d beats previous best iteration\n", numIterations);
+			}
+			
+			if (testMethod)
+				break;
+			
+			numIterations++;
+			
+			System.out.printf("\n\n");
 		}
-		System.err.println("Best score before jiggling is " + bestScore);
+	
+		System.out.printf("Final Result\n");
+		System.out.printf("------------\n");
+		System.out.printf("Iteration #%d\n", bestIterationNum);
+		System.out.println("\tPacking: " + bestIteration.packingAlgo);
+		System.out.println("\tColoring: " + bestIteration.coloringAlgo);
+		System.out.println("\tJiggling: " + bestIteration.jiggleAlgo);
+		System.out.println("\tScore: " + bestIteration.getScore(s));
 		
-		// Now try jiggling it
-		Solution jiggledSolution = jiggleSolution(bestSolution, s, timeLimit);
-		System.err.println("Best score after jiggling is " + jiggledSolution.getScore(s));
-		
-		// Print which configuration was best
-		System.out.println("Winning config:");
-		System.out.println("\tPacking: " + jiggledSolution.packingAlgo);
-		System.out.println("\tColoring: " + jiggledSolution.coloringAlgo);
-		System.out.println("\tJiggling: " + jiggledSolution.jiggleAlgo);
-		
-		
-		
-		long currentTime = System.currentTimeMillis();
-		System.out.println("Total time: " + (currentTime - startTime)/1000 + "s");
+		System.out.printf("\n");
+		System.out.println("Total execution time: " + (System.currentTimeMillis() - startTime)/1000 + "s");
 		
 		// Transform our output into the simulator classes and return it
-		return jiggledSolution.simRepresentation();
+		return bestIteration.simRepresentation();
 	}
 	
 	private static Solution jiggleSolution(Solution baseSolution, double s, long timeLimit) {
@@ -94,9 +130,9 @@ public class Player extends watermelon.sim.Player {
 	}
 	
 	private static ArrayList<Solution> generateAllPossibleSolutions(ArrayList<Location> trees, double width, double height, double s) {
-		System.err.println("generateAllPossibleSolutions called");
+		System.out.println("generateAllPossibleSolutions called");
 		ArrayList<Solution> packings = generateAllPackings(trees, width, height);
-		System.err.println("Generated all packings");
+		System.out.println("Generated all packings");
 		ArrayList<Solution> actualSolutions = new ArrayList<Solution>();
 		
 		Solution newSolution;
@@ -127,7 +163,7 @@ public class Player extends watermelon.sim.Player {
 			actualSolutions.add(newSolution);
 		}
 		
-		System.err.println("Generated all colorings");
+		System.out.println("Generated all colorings");
 		return actualSolutions;
 	}
 	
@@ -151,7 +187,7 @@ public class Player extends watermelon.sim.Player {
 			}
 		}
 		
-		System.err.println("Generated all Rectilinear packings");
+		System.out.println("Generated all Rectilinear packings");
 		
 		// Hex
 		for (PackAlgos.Corner corner : PackAlgos.Corner.values()) {
@@ -172,7 +208,7 @@ public class Player extends watermelon.sim.Player {
 			}
 		}
 		
-		System.err.println("Generated all Hex packings");
+		System.out.println("Generated all Hex packings");
 		
 		// Best Known
 		ArrayList<Location> packing = PackAlgos.bestKnown(trees, width, height);
@@ -181,9 +217,9 @@ public class Player extends watermelon.sim.Player {
 			newSolution.packingAlgo = "bestKnown";
 			if (newSolution.seedNodes.size() > 0)
 				packings.add(newSolution);
-			System.err.println("Generated Best Known packing");
+			System.out.println("Generated Best Known packing");
 		} else {
-			System.err.println("Failed to generate Best Known packing");
+			System.out.println("Failed to generate Best Known packing");
 		}
 		
 		// Physical
@@ -192,7 +228,7 @@ public class Player extends watermelon.sim.Player {
 		if (newSolution.seedNodes.size() > 0)
 			packings.add(newSolution);
 
-		System.err.println("Generated Physical packing");
+		System.out.println("Generated Physical packing");
 		
 		return packings;
 	}
