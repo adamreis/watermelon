@@ -114,7 +114,6 @@ public class ColoringAlgos {
 			}
 			double potentialScore = Solution.getScore(potentialList, 0.01);
 			if (potentialScore > score) {
-				System.err.println("anneal worked! old value was " + score + " new value is " + potentialScore);
 				list = potentialList;
 				score = potentialScore;
 			}
