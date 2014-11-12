@@ -116,13 +116,17 @@ public class Solution {
 	}
 	
 	public double getScore(double scoringMultiplier) {
+		return getScore(seedNodes, scoringMultiplier);
+	}
+	
+	public static double getScore(ArrayList<SeedNode> seedNodeList, double scoringMultiplier) {
 		double total = 0;
-		for (SeedNode node : seedNodes) {
+		for (SeedNode node : seedNodeList) {
 			double nodeScore;
 			double chance = 0.0;
 			double allInfluences = 0.0;
 			double oppositeInfluences = 0.0;
-			for (SeedNode comparisonNode : seedNodes) {
+			for (SeedNode comparisonNode : seedNodeList) {
 				if (comparisonNode == node)
 					continue;
 				allInfluences += 1/node.distanceSquared(comparisonNode);
