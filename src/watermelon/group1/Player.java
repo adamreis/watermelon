@@ -4,7 +4,6 @@ import java.util.*;
 
 import watermelon.sim.Pair;
 import watermelon.sim.seed;
-import watermelon.group1.Consts;
 import watermelon.group1.Solution;
 
 public class Player extends watermelon.sim.Player {
@@ -14,7 +13,8 @@ public class Player extends watermelon.sim.Player {
 
 	@Override
 	public ArrayList<seed> move(ArrayList<Pair> treelist, double width, double height, double s) {
-		long startTime = System.nanoTime(); 
+		long startTime = System.currentTimeMillis();
+		long timeLimit = startTime + 60 * 60 * 1000;
 		
 		// Transform input parameters from simulator classes into our preferred class
 		ArrayList<Location> trees = new ArrayList<Location>();
@@ -51,7 +51,7 @@ public class Player extends watermelon.sim.Player {
 		System.err.println("Best score before jiggling is " + bestScore);
 		
 		// Now try jiggling it
-		Solution jiggledSolution = jiggleSolution(bestSolution, s);
+		Solution jiggledSolution = jiggleSolution(bestSolution, s, timeLimit);
 		System.err.println("Best score after jiggling is " + jiggledSolution.getScore(s));
 		
 		// Print which configuration was best
@@ -60,14 +60,16 @@ public class Player extends watermelon.sim.Player {
 		System.out.println("\tColoring: " + jiggledSolution.coloringAlgo);
 		System.out.println("\tJiggling: " + jiggledSolution.jiggleAlgo);
 		
-		double estimatedTime = System.nanoTime() - startTime;
-		System.out.println("Total time: " + estimatedTime/1000000000 + "s");
+		
+		
+		long currentTime = System.currentTimeMillis();
+		System.out.println("Total time: " + (currentTime - startTime)/1000 + "s");
 		
 		// Transform our output into the simulator classes and return it
 		return jiggledSolution.simRepresentation();
 	}
 	
-	private static Solution jiggleSolution(Solution baseSolution, double s) {
+	private static Solution jiggleSolution(Solution baseSolution, double s, long timeLimit) {
 		Solution newSolution;
 		baseSolution.jiggleAlgo = "none";
 		Solution bestSolution = baseSolution;
@@ -75,8 +77,7 @@ public class Player extends watermelon.sim.Player {
 		jiggledSolutions.add(baseSolution);
 		
 		newSolution = baseSolution.deepDuplicate();
-		JiggleAlgos.jiggleIterative(newSolution, s);
-		newSolution.jiggleAlgo = "iterative";
+		JiggleAlgos.jiggleIterative(newSolution, s, timeLimit);
 		jiggledSolutions.add(newSolution);
 		
 		// return whichever "jiggle solution" has the highest score
