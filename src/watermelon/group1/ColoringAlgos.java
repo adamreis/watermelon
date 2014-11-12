@@ -7,6 +7,7 @@ import java.util.Random;
 public class ColoringAlgos {
 	
 	private static final int MAX_RECOLORS = 50;
+	private static final int SIMULATED_ANNEALS = 50;
 	
 	/*
 	 * Colors each seed such that it is least like the surrounding seeds.
@@ -93,6 +94,33 @@ public class ColoringAlgos {
 		while (localMax && i < MAX_RECOLORS) {
 			localMax = reColorIfNecessary(list);
 			i++;
+		}
+		// scoring multiplier is irrelevant in this situation, so we just pass in a random number
+		double score = Solution.getScore(list, 0.01);
+		for (i = 0; i < SIMULATED_ANNEALS; i++) {
+			ArrayList<SeedNode> potentialList = new ArrayList<SeedNode>();
+			for (SeedNode node : list) {
+				potentialList.add(node);
+				if (node.getMostCommonNeighbor().equals(SeedNode.Ploidies.DIPLOID))
+					node.ploidy = SeedNode.Ploidies.TETRAPLOID;
+				else
+					node.ploidy = SeedNode.Ploidies.DIPLOID;
+			}
+			boolean localInnerMax = true;
+			int j = 0;
+			while (localInnerMax && j < MAX_RECOLORS) {
+				localMax = reColorIfNecessary(potentialList);
+				j++;
+			}
+			double potentialScore = Solution.getScore(potentialList, 0.01);
+			if (potentialScore > score) {
+				System.err.println("anneal worked! old value was " + score + " new value is " + potentialScore);
+				list = potentialList;
+				score = potentialScore;
+			}
+			else {
+				break;
+			}
 		}
 	}
 	
