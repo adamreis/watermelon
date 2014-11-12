@@ -1,9 +1,5 @@
 package watermelon.group1;
 
-import java.util.ArrayList;
-
-import watermelon.group1.Solution;
-
 public class JiggleAlgos {
 
 	
@@ -58,17 +54,18 @@ public class JiggleAlgos {
 		return improved;
 	}
 	
-	public static void jiggleIterative(Solution solution, double s) {
-		int i = 0;
-		int maxIterations = 100;
+	public static void jiggleIterative(Solution solution, double s, long timeLimit) {
 		boolean improved;
-		
-		solution.jiggleAlgo = "iterative";
 		
 		do {
 			improved = false;
 			for (SeedNode seedNode : solution.seedNodes)
 				improved = improved || jiggleAllDirections(solution, seedNode, s);
-		} while (i++ < maxIterations && improved);
+		} while (improved && System.currentTimeMillis() < timeLimit);
+		
+		if (improved)
+			solution.jiggleAlgo = "iterative -- time limited";
+		else
+			solution.jiggleAlgo = "iterative -- no longer improving";
 	}
 }
