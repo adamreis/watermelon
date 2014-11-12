@@ -70,7 +70,7 @@ public class Player extends watermelon.sim.Player {
 			
 			// Write the log to a file
 			BufferedWriter out = null;
-			String logFileName = "ResultsLog.txt";
+			String logFileName = mapName + "_results_log.txt";
 			try  
 			{
 			    FileWriter fstream = new FileWriter(logFileName, true);
