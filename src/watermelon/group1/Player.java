@@ -1,5 +1,8 @@
 package watermelon.group1;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 import watermelon.sim.Pair;
@@ -32,7 +35,7 @@ public class Player extends watermelon.sim.Player {
 			System.out.printf("-------------\n");
 			
 			long iterationStartTime = System.currentTimeMillis();
-						
+			String mapName = "CHANGE THIS TO MAP NAME";
 			boolean testMethod = false;
 			ArrayList<Solution> possibleSolutions;
 			
@@ -51,15 +54,35 @@ public class Player extends watermelon.sim.Player {
 			}
 			
 			// Now find the best one
+			StringBuffer resultsLog = new StringBuffer();
+			resultsLog.append("Map, Iteration, Packing Algo, Coloring Algo, score");
 			Solution bestSolution = new Solution();
 			double bestScore = 0;
 			for (Solution solution : possibleSolutions) {
 				double newScore = solution.getScore(s);
+				String resultLine = String.format("%s, %d, %s, %s, %f\n", mapName, numIterations, solution.packingAlgo, solution.coloringAlgo, newScore);
+				resultsLog.append(resultLine);
 				if (newScore > bestScore) {
 					bestScore = newScore;
 					bestSolution = solution;
 				}
 			}
+			
+			// Write the log to a file
+			BufferedWriter out = null;
+			String logFileName = "ResultsLog.txt";
+			try  
+			{
+			    FileWriter fstream = new FileWriter(logFileName, true);
+			    out = new BufferedWriter(fstream);
+			    out.write(resultsLog.toString());
+			    out.close();
+			}
+			catch (IOException e)
+			{
+			    System.err.println("Could not write log file.");
+			}
+			
 			System.out.println("Best score before jiggling is " + bestScore);
 			
 			// Now try jiggling it
@@ -144,22 +167,22 @@ public class Player extends watermelon.sim.Player {
 			
 			newSolution = packing.deepDuplicate();
 			ColoringAlgos.colorConcentric(newSolution.seedNodes, new Location(width/2, height/2));
-			newSolution.coloringAlgo = "concentric, center";
+			newSolution.coloringAlgo = "concentric from center";
 			actualSolutions.add(newSolution);
 			
 			newSolution = packing.deepDuplicate();
 			ColoringAlgos.colorConcentric(newSolution.seedNodes, new Location(0, 0));
-			newSolution.coloringAlgo = "concentric, UL corner";
+			newSolution.coloringAlgo = "concentric from UL corner";
 			actualSolutions.add(newSolution);
 			
 			newSolution = packing.deepDuplicate();
 			ColoringAlgos.colorMaxValue(newSolution.seedNodes, new Location(width/2, height/2));
-			newSolution.coloringAlgo = "max value, center";
+			newSolution.coloringAlgo = "max value from center";
 			actualSolutions.add(newSolution);
 			
 			newSolution = packing.deepDuplicate();
 			ColoringAlgos.colorMaxValue(newSolution.seedNodes, new Location(0,0));
-			newSolution.coloringAlgo = "max value, UL corner";
+			newSolution.coloringAlgo = "max value from UL corner";
 			actualSolutions.add(newSolution);
 		}
 		
@@ -175,13 +198,13 @@ public class Player extends watermelon.sim.Player {
 		// Rectilinear
 		for (PackAlgos.Corner corner : PackAlgos.Corner.values()) {
 			newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, corner, false, null), trees, width, height);
-			newSolution.packingAlgo = "rectilinear, " + corner + " corner";
+			newSolution.packingAlgo = "rectilinear from " + corner + " corner";
 			if (newSolution.seedNodes.size() > 0)
 				packings.add(newSolution);
 			
 			for (Location tree : trees) {
 				newSolution = new Solution(PackAlgos.rectilinear(trees, width, height, corner, false, tree), trees, width, height);
-				newSolution.packingAlgo = "rectilinear, " + corner + " corner around tree at " + tree.x + ", " + tree.y;
+				newSolution.packingAlgo = "rectilinear from " + corner + " corner around tree at " + tree.x + ", " + tree.y;
 				if (newSolution.seedNodes.size() > 0)
 					packings.add(newSolution);
 			}
@@ -194,13 +217,13 @@ public class Player extends watermelon.sim.Player {
 			for (PackAlgos.Direction dir : PackAlgos.Direction.values()) {
 				for (int i = 0; i < 2; i++) {
 					newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, corner, dir, i == 0, null), trees, width, height);
-					newSolution.packingAlgo = "hex, " + corner + " corner, " + dir + " direction" + (i == 0 ? " with spread" : "");
+					newSolution.packingAlgo = "hex from " + corner + " corner, " + dir + " direction" + (i == 0 ? " with spread" : "");
 					if (newSolution.seedNodes.size() > 0)
 						packings.add(newSolution);
 					
 					for (Location tree : trees) {
 						newSolution = new Solution(PackAlgos.hexagonal(trees, width, height, corner, dir, i == 0, tree), trees, width, height);
-						newSolution.packingAlgo = "hexagonal around tree at " + tree.x + ", " + tree.y  + ", " + corner + " corner, " + dir + " direction" + (i == 0 ? " with spread" : "");;
+						newSolution.packingAlgo = "hexagonal around tree at " + tree.x + ", " + tree.y  + " from " + corner + " corner in " + dir + " direction" + (i == 0 ? " with spread" : "");;
 						if (newSolution.seedNodes.size() > 0)
 							packings.add(newSolution);
 					}
