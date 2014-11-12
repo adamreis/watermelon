@@ -55,12 +55,12 @@ public class Player extends watermelon.sim.Player {
 			
 			// Now find the best one
 			StringBuffer resultsLog = new StringBuffer();
-			resultsLog.append("Map, Iteration, Packing Algo, Coloring Algo, score");
+			resultsLog.append("Map, Iteration, Packing Algo, Coloring Algo, s value, score");
 			Solution bestSolution = new Solution();
 			double bestScore = 0;
 			for (Solution solution : possibleSolutions) {
 				double newScore = solution.getScore(s);
-				String resultLine = String.format("%s, %d, %s, %s, %f\n", mapName, numIterations, solution.packingAlgo, solution.coloringAlgo, newScore);
+				String resultLine = String.format("%s, %d, %s, %s, %f, %f\n", mapName, numIterations, solution.packingAlgo, solution.coloringAlgo, s, newScore);
 				resultsLog.append(resultLine);
 				if (newScore > bestScore) {
 					bestScore = newScore;
@@ -70,7 +70,7 @@ public class Player extends watermelon.sim.Player {
 			
 			// Write the log to a file
 			BufferedWriter out = null;
-			String logFileName = mapName + "_results_log.txt";
+			String logFileName = mapName + "_" + s + "_results_log.txt";
 			try  
 			{
 			    FileWriter fstream = new FileWriter(logFileName, true);
